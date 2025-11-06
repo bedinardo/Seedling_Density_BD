@@ -58,7 +58,17 @@ Great now we have cleaned seedling density for all species that occur in each pl
 
 **Climate Data Cleaning and Calculation**
 
+Still in the works here, 
 
+But, high level
+will need terra package
+
+Step one, down load raster layer stack for each each year 
+Two: apply an OR shp mask to the area
+Three: for each year, calc min, max, avg temp, and avg perp
+Four: have this data all in a raster stack for a single year (I think)
+Five: make sure everything seems right
+spatraster is the name of the thing I want that is a raster layerstack (multiple values for a pixel)
  
 
 
