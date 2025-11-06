@@ -1,0 +1,26 @@
+---
+title: "Seedling Density Work Flow"
+output: html_document
+date: "2025-11-06"
+---
+
+##Work Flow
+#Part 1: FIA data aquistion and processing
+**Load packages**
+install.packages("rFIA")
+library("rFIA")
+library("dplyr")
+library("tidyr")
+
+**Data aquistion**
+Get all FIA data for Oregon by using rFIA
+```{r}
+options(timeout = 600) #Need to increase download time since file is so large
+#Grab the data
+OR <- getFIA(states = 'OR', dir = "C:/Users/dinardo/OneDrive - University Of Oregon/FIA", load = FALSE) #Install the data
+OR <- readFIA(dir = "C:/Users/dinardo/OneDrive - University Of Oregon/FIA",
+              states = 'OR',
+              nCores = 1,
+              inMemory = TRUE)
+```
+
