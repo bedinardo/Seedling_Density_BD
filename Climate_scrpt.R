@@ -21,6 +21,7 @@ download_data("gridmet",
 # Check that the downloaded files are present
 list.files("C:/Users/Bryce/Desktop/tmmn")
 
+
 # Process the downloaded covariates into a terra raster object
 tmmn <- process_covariates(
   covariate = "gridmet",
@@ -76,4 +77,18 @@ terra::plot(tmmn_or_crop)
 library("sf")
 or_tmmn_sf <- sf::st_as_sf(OR_tmmn)
 or_tmmn_tbl <- as_tibble(or_tmmn_sf)
+
+#can I get the whole year
+
+#feeding a range of of dates, should grab all rasters within date range
+tmmn2020 <- process_covariates(
+  covariate = "gridmet",
+  variable = "Minimum Near-Surface Air Temperature",
+  date = c("2020-01-01", "2020-12-31"),
+  path = file.path("C:/Users/Bryce/Desktop/tmmn")
+)
+str(tmmn2020) #data as SpatRaster
+head(tmmn2020)
+nlyr(tmmn2020) #confirming we download all days of the year, n=366 (leap year)
+#Calc mean tmmn for 2020 using terra as spatraster
 
