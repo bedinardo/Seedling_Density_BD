@@ -3,6 +3,93 @@ title: "Seedling Density Work Flow"
 output: html_document
 date: "2025-11-06"
 ---
+# Climatic drivers of Oregon Seedling Density 
+
+**By Bryce DiNardo**
+
+## Literature review (~5 paragraphs)
+
+### Paragraph 1 — Problem & significance (big‑picture reviews)
+…
+
+### Paragraph 2–3 — Past work & data landscape (who/where/how; gaps)
+…
+
+### Paragraph 4 — Purpose & why now
+…
+
+### Paragraph 5 — Hypotheses (directional) & brief rationale
+- H1: … (I predict … because …)
+- H2: …
+
+## Dataset identification
+- Dataset A (URL/DOI): collector, methods, columns/units …
+- OBA → transformed to … (plan and rationale) …
+
+## Workflow plan (prose)
+1) Cleaning & validation: …  
+2) Aggregations/derivations: …  
+3) Functions/loops (inputs → outputs): …  
+4) Statistical test + programmatic implementation: …  
+5) Planned visualizations/tables: …  
+6) Risks & mitigations: …
+
+In pros, please describe the workflow you will use tidy your raw data, manipulate and summarize it in relevant ways, test you hypothesis, and visualize it.The goal here is to develop a logic to your workflow before you code.
+
+Include any needed cleaning steps (e.g., “remove non-species such as ‘fly’ from the species column”)
+Include any aggregation steps (e.g., “count the number of entries by region and year to calculate species richness”).
+Include descriptions of any functions/for loops you will write.
+Include a description the the statistical test you will use, and how you will apply it programatically (i.e., I will simulate the null hypothesis by shuffling the labels…“)
+
+**Cleaning and processing FIA data**
+Import all OR FIA data using rFIA 
+Extract Seedling tree per arch (TPA) for each year of data wanted. 
+Do this by using rFIA seedling function, I want to seedling density groupby plot, returnSPatial == TRUE, and bySpecies.
+This will give me the TPA for each species in each plot and have then in an Oregon polygon. Not sure yet if I need to provide a shp file for that yet, but easy enough if so.
+
+Now I have a bunch of seedling densities, sorted by plot and species
+*Next lets filter to clean some data*
+Filter for only forest plots (PLOT_STATUS_CD == 1)
+Remove TPA NAs and 0 values or "unknown" 
+Remove sites with missing Lat or Long values
+Filter for year wanted(2013 - 2022 one complete inventory cycle of most recent)
+
+Great now we have cleaned seedling density for all species that occur in each plot throughout the state in that given year this is our *responds variable*
+
+**Climate Data Cleaning and Calculation**
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ##Work Flow
 #Part 1: FIA data aquistion and processing
