@@ -1,0 +1,21 @@
+---
+title: "Climate data Gathering"
+author: "Bryce DiNardo"
+date: "2025-11-07"
+output: html_document
+---
+This document demonstrates how to download daily minimum temperature data 
+from gridMET for the year 2020, crop it to Oregon, and calculate the annual mean while keep data as a raster.
+
+Install and load needed packages
+
+```{r}
+install.packages("amadeus")
+install.packages("tigris")
+install.packages("terra")
+install.packages("sf")
+library(terra)
+library(tigris)
+library(amadeus)
+library(sf)
+```
