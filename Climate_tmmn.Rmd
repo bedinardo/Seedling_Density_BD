@@ -91,3 +91,59 @@ In short I
 - Cropped/masked to Oregon.
 - Computed a single annual mean raster.
 
+Now lets see if I can write a function that can do this for any day of the year,
+inputs year, directory, state autoset to year 
+```{r}
+#need to check function still
+# Function downloads gridMET data for a given climatic variable and year while placing the download into a directory
+gridMET_download <- function(year, variable, dir) {
+  
+  # 1. Download gridMET data for the year
+  download_data("gridmet",
+                variable = variable,
+                year = year,
+                directory_to_save = dir,
+                acknowledgement = TRUE,
+                download = TRUE,
+                remove_command = TRUE,
+                hash = TRUE)
+}
+#test function
+gridMET_download(2018,  )
+```
+
+
+New function that is separate from downloading the .nt file 
+```{r}
+#This function works
+#It take the year and directory of the net.cd file that you have saved and computes the mean tmmn
+mean_tmmn_OR <- function(year, dir, state_name = "Oregon"){
+  states_sf <- tigris::states(year = 2024)
+  state_boundary <- states_sf[states_sf$NAME == state_name, ]
+  
+  # 3. Process covariates for the full year
+  tmmn <- process_covariates(
+    covariate = "gridmet",
+    variable  = "Minimum Near-Surface Air Temperature",
+    date      = c(paste0(year, "-01-01"), paste0(year, "-12-31")),
+    path      = file.path(dir)
+  )
+  
+  # 4. Reproject state boundary to match raster CRS
+  state_proj <- terra::project(terra::vect(state_boundary), crs(tmmn))
+  
+  # 5. Crop and mask raster to state boundary
+  tmmn_crop <- terra::crop(tmmn, state_proj)
+  tmmn_mask <- terra::mask(tmmn_crop, state_proj)
+  
+  # 6. Calculate annual mean
+  mean_tmmn <- terra::mean(tmmn_mask, na.rm = TRUE)
+  
+  return(mean_tmmn)
+}
+OR_2019<-mean_tmmn_OR(2019, dir2)
+nlyr(OR_2019) #check to make sure the merging happened correctly 
+terra::plot(OR_2019) #check that it plots 
+```
+
+
