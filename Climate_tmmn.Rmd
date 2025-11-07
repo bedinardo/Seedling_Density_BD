@@ -19,3 +19,75 @@ library(tigris)
 library(amadeus)
 library(sf)
 ```
+
+Set director for downloading Gridmat data as a .cd
+```{r}
+dir <- dir <- ("C:/Users/Bryce/Desktop") #I had trouble bring it right into my repo folder
+```
+
+Download the netCDF data file with download_data from gridmat using download_data
+```{r}
+#Variable == whatever variable you want to download
+#Year = year of interest
+download_data("gridmet",
+              variable = "Minimum Near-Surface Air Temperature",
+              year = 2020,
+              directory_to_save = dir,
+              acknowledgement = TRUE,
+              download = TRUE,
+              remove_command = TRUE,
+              hash = TRUE)
+
+```
+
+Next need to get an Oregon shape file to crop our nation wide data to just our ROI using tigris
+```{r}
+states_2024 <- tigris::states(year = 2024)
+oregon <- states_2024[states_2024$NAME == "Oregon", ]
+#plot(oregon) #make sure we succeeded in getting Oregon boundary
+```
+
+Now process the .netfile to pull out out wanted data
+```{r}
+tmmn2020 <- process_covariates(
+  covariate = "gridmet",
+  variable  = "Minimum Near-Surface Air Temperature",
+  date      = c("2020-01-01", "2020-12-31"), #this range gets use the whole year for the whole country
+  path      = file.path(dir, "tmmn")
+)
+
+# Check structure and number of layers
+str(tmmn2020)
+nlyr(tmmn2020)  # should be 366 (leap year)
+```
+Check crs, and reproject tigris data to match climate data projection
+Crop and mask our whole year whole country spat raster to just Orgeon
+```{r}
+# Check CRS of raster
+crs(tmmn2020) #WGS84
+
+# Reproject Oregon boundary to match raster CRS
+oregon_proj <- terra::project(terra::vect(oregon), crs(tmmn2020))
+
+# Now crop and mask safely
+tmmn_or_crop <- terra::crop(tmmn2020, oregon_proj)
+tmmn_or_mask <- terra::mask(tmmn_or_crop, oregon_proj)
+```
+
+Finally lets take all the rasters and calculate the mean minimum air tempature for the year 2020 taken from all the daily lows. 
+```{r}
+mean_tmmn_2020_OR <- terra::mean(tmmn_or_mask, na.rm = TRUE)
+
+# Confirm single layer
+nlyr(mean_tmmn_2020_OR)
+
+# Plot annual mean raster
+terra::plot(mean_tmmn_2020_OR)
+
+```
+Temperatures in Kelvin 
+In short I 
+- Downloaded and processed 366 daily rasters.
+- Cropped/masked to Oregon.
+- Computed a single annual mean raster.
+
