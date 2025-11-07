@@ -9,6 +9,7 @@ dir <- ("C:/Users/Bryce/Desktop")
 
 # Download gridMET minimum temperature data for 2020
 # (saved locally since OneDrive path caused issues)
+#Do this once for the year and varable you want, might be able to get in bulk
 download_data("gridmet",
               variable = "Minimum Near-Surface Air Temperature",
               year = 2020,
@@ -57,7 +58,7 @@ OR_tmmn <- amadeus::calculate_covariates(
   locs_id = "NAME",
   radius = 0,
   geom = "terra"
-)
+) #this makes a vector I think
 
 # Plotting OR_tmmn shows just the outline (attributes hold the covariates)
 terra::plot(OR_tmmn)
@@ -67,11 +68,11 @@ head(OR_tmmn)
 
 # Mask raster to Oregon boundary (clip values to polygon)
 tmmn_or <- terra::mask(tmmn[[1]], terra::vect(or_state))
-terra::plot(tmmn_or)
+terra::plot(tmmn_or) #this gives big extent
 
 # Crop raster to Oregon extent (zoom in so Oregon fills the plot)
 tmmn_or_crop <- terra::crop(tmmn, terra::vect(or_state))
-terra::plot(tmmn_or_crop)
+terra::plot(tmmn_or_crop) #This makes the raster we want
 
 # Convert covariate output to sf/tibble for tidy workflows
 library("sf")
@@ -88,7 +89,22 @@ tmmn2020 <- process_covariates(
   path = file.path("C:/Users/Bryce/Desktop/tmmn")
 )
 str(tmmn2020) #data as SpatRaster
-head(tmmn2020)
-nlyr(tmmn2020) #confirming we download all days of the year, n=366 (leap year)
-#Calc mean tmmn for 2020 using terra as spatraster
 
+nlyr(tmmn2020) #confirming we download all days of the year, n=366 (leap year)
+
+#Clip to OR file
+
+
+#Calc mean tmmn for 2020 using terra as spatraster
+mean_tmmn_2020 <- terra::mean(tmmn2020, na.rm = TRUE) 
+# I think this worked, but this isn't for Oregon but whole country
+
+#Need to take  take tmmn_2020 and makes with or_state boundry then calc coverates 
+#Can I write a function/ for loop to make a bunch of different raster for each year that I want
+tmmn_or_crop_2020 <- terra::crop(tmmn2020, terra::vect(or_state))
+terra::plot(tmmn_or_crop_2020[[250]]) #without [[1]] this will map all of them
+#mean 2020 OR
+mean_tmmn_2020_OR<- terra::mean(tmmn_or_crop_2020, na.rm = TRUE)
+nlyr(mean_tmmn_2020_OR) # one layer...cool that what I want
+terra :: plot(mean_tmmn_2020_OR) #I think this worked, should be a map showing the mean tempature minuim 
+#for the year 2020 only in OR
