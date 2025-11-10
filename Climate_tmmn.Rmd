@@ -110,7 +110,7 @@ gridMET_download <- function(year, var, dir) {
 }
 #test function
 dir<-"C:/Users/Bryce/Desktop/tmmn"
-gridMET_download(2018, "Minimum Near-Surface Air Temperature", dir)
+gridMET_download(2018, "Maximum Near-Surface Air Temperature", dir)
 #it worked!
 #check down load
 list.files(dir, recursive = TRUE, pattern = "tmmn")
@@ -120,7 +120,7 @@ list.files(dir, recursive = TRUE, pattern = "tmmn")
 New function that is separate from downloading the .nt file 
 ```{r}
 #This function works 
-#It take the year and directory of the net.cd file that you have saved and computes the mean of your tempature variable
+#It take the year and directory of the net.cd file that you have saved and computes the mean of your temperature variable
 annual_mean_tempMaxMin <- function(year, var, dir, state_name = "Oregon"){
   states_sf <- tigris::states(year = 2024)
   state_boundary <- states_sf[states_sf$NAME == state_name, ] #getting OR shp file
@@ -179,9 +179,43 @@ mean_tmmn_OR <- function(year, dir, state_name = "Oregon"){
   return(mean_tmmn)
 }
 
-OR_2018<-mean_tmmn_OR(2018, "C:/Users/Bryce/Desktop/tmmn/tmmn")
+tmmn_2018<-mean_tmmn_OR(2018, "C:/Users/Bryce/Desktop/tmmn/tmmn")
 nlyr(OR_2018)
 terra::plot(OR_2018)
 ```
 
+Testing with both new function with max 2018 data
+```{r}
+#Download 
+gridMET_download(2018, "Maximum Near-Surface Air Temperature", dir)
+#check
+list.files("C:/Users/Bryce/Desktop/tmmn/")
+#so a new folder has been names tmmx, will need to change dir for next function
+
+#calc average tmmx
+tmmx_2018<-annual_mean_tempMaxMin(2018,"Maximum Near-Surface Air Temperature", "C:/Users/Bryce/Desktop/tmmn/tmmx")
+#check and graph
+nlyr(tmmx_2018) #1
+terra::plot(tmmx_2018) #very nice
+```
+
+Cool so now I have tmmx and tmmn for 2018. Lets try to calc the average
+```{r}
+
+# Calculate average annual temperature 
+tmean_2018 <- (tmmn_2018 + tmmx_2018) / 2
+nlyr(tmean_2018)
+terra::plot(tmean_2018)
+#Looks like it worked to me
+```
+
+Awesome lets make a quick function of it
+```{r}
+#this works too
+tmean<-function(tmmn,tmmx){
+  tmean<-(tmmn + tmmx) / 2
+  return(tmean)
+}
+tmean(tmmn_2018,tmmx_2018)
+```
 
