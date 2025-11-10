@@ -96,11 +96,11 @@ inputs year, directory, state autoset to year
 ```{r}
 #need to check function still
 # Function downloads gridMET data for a given climatic variable and year while placing the download into a directory
-gridMET_download <- function(year, variable, dir) {
+gridMET_download <- function(year, var, dir) {
   
-  # 1. Download gridMET data for the year
+  # Download gridMET data for the year
   download_data("gridmet",
-                variable = variable,
+                variable = var,
                 year = year,
                 directory_to_save = dir,
                 acknowledgement = TRUE,
@@ -109,14 +109,51 @@ gridMET_download <- function(year, variable, dir) {
                 hash = TRUE)
 }
 #test function
-gridMET_download(2018,  )
+dir<-"C:/Users/Bryce/Desktop/tmmn"
+gridMET_download(2018, "Minimum Near-Surface Air Temperature", dir)
+#it worked!
+#check down load
+list.files(dir, recursive = TRUE, pattern = "tmmn")
 ```
 
 
 New function that is separate from downloading the .nt file 
 ```{r}
-#This function works
-#It take the year and directory of the net.cd file that you have saved and computes the mean tmmn
+#This function works 
+#It take the year and directory of the net.cd file that you have saved and computes the mean of your tempature variable
+annual_mean_tempMaxMin <- function(year, var, dir, state_name = "Oregon"){
+  states_sf <- tigris::states(year = 2024)
+  state_boundary <- states_sf[states_sf$NAME == state_name, ] #getting OR shp file
+  
+  # Process covariates for the full year and whatever variable you are using
+  x <- process_covariates(
+    covariate = "gridmet",
+    variable  = var,
+    date      = c(paste0(year, "-01-01"), paste0(year, "-12-31")),
+    path      = file.path(dir)
+  )
+  
+  # Reproject state boundary to match raster CRS
+  state_proj <- terra::project(terra::vect(state_boundary), crs(x))
+  
+  # Crop and mask raster to state boundary
+  crop <- terra::crop(x, state_proj)
+  mask <- terra::mask(crop, state_proj)
+  
+  #  Calculate annual mean
+  mean_x <- terra::mean(mask, na.rm = TRUE)
+  
+  return(mean_x)
+}
+OR_2018_2<-annual_mean_tempMaxMin(2018, "Minimum Near-Surface Air Temperature", dir ="C:/Users/Bryce/Desktop/tmmn/tmmn")
+nlyr(OR_2019) #check to make sure the merging happened correctly 
+terra::plot(OR_2019) #check that it plots 
+
+
+
+```
+```{r}
+#holding on to this cause it's the skeloton
 mean_tmmn_OR <- function(year, dir, state_name = "Oregon"){
   states_sf <- tigris::states(year = 2024)
   state_boundary <- states_sf[states_sf$NAME == state_name, ]
@@ -141,9 +178,10 @@ mean_tmmn_OR <- function(year, dir, state_name = "Oregon"){
   
   return(mean_tmmn)
 }
-OR_2019<-mean_tmmn_OR(2019, dir2)
-nlyr(OR_2019) #check to make sure the merging happened correctly 
-terra::plot(OR_2019) #check that it plots 
+
+OR_2018<-mean_tmmn_OR(2018, "C:/Users/Bryce/Desktop/tmmn/tmmn")
+nlyr(OR_2018)
+terra::plot(OR_2018)
 ```
 
 
