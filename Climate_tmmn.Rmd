@@ -289,3 +289,60 @@ terra::plot(pr_2018)
 #it works 
 ```
 
+Let try to combine the two function with an if statment based on the var used, convert temperature into C but keep precp as mm
+
+```{r}
+process_annual_gridmet <- function(year, var, dir, state_name = "Oregon") {
+  library(terra)
+  library(tigris)
+
+  # Load state boundary
+  states_sf <- tigris::states(year = 2024)
+  state_boundary <- states_sf[states_sf$NAME == state_name, ]
+
+  # Process covariates
+  x <- process_covariates(
+    covariate = "gridmet",
+    variable  = var,
+    date      = c(paste0(year, "-01-01"), paste0(year, "-12-31")),
+    path      = file.path(dir)
+  )
+
+  # Reproject, crop, and mask
+  state_proj <- terra::project(terra::vect(state_boundary), crs(x))
+  crop <- terra::crop(x, state_proj)
+  mask <- terra::mask(crop, state_proj)
+
+  # Determine operation based on variable
+  if (var %in% c("tmmn", "tmmx", "Minimum Near-Surface Air Temperature", "Maximum Near-Surface Air Temperature")) {
+    result <- mean(mask, na.rm = TRUE)
+    result <- result - 273.15  # Convert from Kelvin to Celsius
+  } else if (var %in% c("pr", "Precipitation")) {
+    result <- sum(mask, na.rm = TRUE)  # Total annual precipitation in mm
+  } else {
+    stop("Unsupported variable. Please use 'tmmn', 'tmmx', or 'pr'.")
+  }
+
+  # Save raster
+  out_name <- paste0(var, "_", year, ".tif")
+  writeRaster(result, out_name, overwrite = TRUE)
+
+  return(result)
+}
+
+```
+Test
+
+```{r}
+getwd()
+result<-process_annual_gridmet(2018, "Precipitation", "C:/Users/Bryce/Desktop/pr" )
+
+#some checks
+class(result) 
+terra::plot(result)
+summary(values(result))
+plot(is.na(result), main = "NA Pixels in Annual Precipitation")
+
+
+```
+
