@@ -1,0 +1,93 @@
+---
+title: "Climate Functions"
+author: "Bryce DiNardo"
+date: "2025-11-10"
+output: html_document
+---
+##Functions used for accessing and processing gridMAT climate data 
+
+
+**Downloading gridMAT data**
+```{r setup, include=FALSE}
+#This function take the year and climatic varaible of intrest and will download a .ND file to the set directory
+gridMET_download <- function(year, var, dir) {
+  
+  # Download gridMET data for the year
+  download_data("gridmet",
+                variable = var,
+                year = year,
+                directory_to_save = dir,
+                acknowledgement = TRUE,
+                download = TRUE,
+                remove_command = TRUE,
+                hash = TRUE)
+}
+```
+
+**Processing tmmx, tmmn, and pr convaritates**
+```{r}
+#This function year and variable of intrest (only tmmx, tmmn, or pr), the working directory in which the  already downloaded .ND file is located, and the name of state of intrest, pre-set to OR
+#Function process_covariates for the whole year, creating a raster stack, with each reaster repesenting a day
+#Gets a state shp file and reporjects, the shp to the .ND crs, and masks data to just roi
+#processes masked data based on variable of intrest
+#tmmx and tmmn, mean is taken and units are converted from Kelvin to Celius 
+#Pr, sum pr for the year is taken, units in mm
+#Output is automaticly save in cd as var_year.TIF
+process_annual_gridmet <- function(year, var, dir, state_name = "Oregon") {
+  library(terra)
+  library(tigris)
+
+  # Load state boundary
+  states_sf <- tigris::states(year = 2024)
+  state_boundary <- states_sf[states_sf$NAME == state_name, ]
+
+  # Process covariates
+  x <- process_covariates(
+    covariate = "gridmet",
+    variable  = var,
+    date      = c(paste0(year, "-01-01"), paste0(year, "-12-31")),
+    path      = file.path(dir)
+  )
+
+  # Reproject, crop, and mask
+  state_proj <- terra::project(terra::vect(state_boundary), crs(x))
+  crop <- terra::crop(x, state_proj)
+  mask <- terra::mask(crop, state_proj)
+
+  # Determine operation based on variable
+  if (var %in% c("tmmn", "tmmx", "Minimum Near-Surface Air Temperature", "Maximum Near-Surface Air Temperature")) {
+    result <- mean(mask, na.rm = TRUE)
+    result <- result - 273.15  # Convert from Kelvin to Celsius
+  } else if (var %in% c("pr", "Precipitation")) {
+    result <- sum(mask, na.rm = TRUE)  # Total annual precipitation in mm
+  } else {
+    stop("Unsupported variable. Please use 'tmmn', 'tmmx', or 'pr'.")
+  }
+
+  # Save raster
+  out_name <- paste0(var, "_", year, ".tif")
+  writeRaster(result, out_name, overwrite = TRUE)
+
+  return(result)
+}
+```
+
+**Calcutaing annunual tempature mean from tmmx and tmmn**
+```{r}
+#This function calcuates the yearly tempature mean from tmmn and tmmx
+#Function takes same year tmmn and tmmx spat rasters calcuated in process_annual_gridmet, year, and directory, pre set to current working directory
+#Outputs mean annual tempature for a given year, saved as tmean_year.TIF in dir 
+
+tmean <- function(tmmn, tmmx, year, out_dir = getwd()) {
+  # Calculate pixel-wise mean temperature
+  tmean_raster <- (tmmn + tmmx) / 2
+
+  # Save raster to file
+  out_path <- file.path(out_dir, paste0("tmean_", year, ".tif"))
+  writeRaster(tmean_raster, out_path, overwrite = TRUE)
+
+  return(tmean_raster)
+}
+
+```
+
