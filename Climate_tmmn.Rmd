@@ -94,8 +94,9 @@ In short I
 Now lets see if I can write a function that can do this for any day of the year,
 inputs year, directory, state autoset to year 
 ```{r}
-#need to check function still
+#function works
 # Function downloads gridMET data for a given climatic variable and year while placing the download into a directory
+#should work with all variables from gridMET
 gridMET_download <- function(year, var, dir) {
   
   # Download gridMET data for the year
@@ -120,6 +121,7 @@ list.files(dir, recursive = TRUE, pattern = "tmmn")
 New function that is separate from downloading the .nt file 
 ```{r}
 #This function works 
+#dont use for precp
 #It take the year and directory of the net.cd file that you have saved and computes the mean of your temperature variable
 annual_mean_tempMaxMin <- function(year, var, dir, state_name = "Oregon"){
   states_sf <- tigris::states(year = 2024)
@@ -216,6 +218,74 @@ tmean<-function(tmmn,tmmx){
   tmean<-(tmmn + tmmx) / 2
   return(tmean)
 }
+#Final test: good to go
 tmean(tmmn_2018,tmmx_2018)
+```
+Great, so now I can download any varaible and calc tmmn, tmmx, and tmean. Lets do annual precp
+
+```{r}
+#Should be able to get the data no problem
+gridMET_download(2018, "Precipitation", "C:/Users/Bryce/Desktop")
+list.files("C:/Users/Bryce/Desktop/pr")
+#data aquired
+```
+Now need to take our national pr data and turn it into oregon annual precp
+```{r}
+
+#Process covariate
+pr_2018<-process_covariates(
+   covariate = "gridmet",
+    variable  = "Precipitation",
+    date      = c("2018-01-01", "2018-12-31"),
+    path      = file.path("C:/Users/Bryce/Desktop/pr")
+  )
+nlyr(pr_2018) #365 but whole country, mask to OR
+#Aquire OR shp
+OR_sf <- tigris::states(year = 2024)
+  OR_boundary <- OR_sf[OR_sf$NAME == "Oregon", ] #getting OR shp file
+#reproject
+OR_proj <- terra::project(terra::vect(OR_boundary), crs(pr_2018))
+#crop and mask
+crop <- terra::crop(pr_2018, OR_proj)
+  mask <- terra::mask(crop, OR_proj)
+#Check work
+terra::plot(mask)
+nlyr(mask)
+
+#Hard part
+#calc precp
+annual_precip_2018 <- sum(mask, na.rm = TRUE) #values are in mm 
+nlyr(annual_precip_2018)
+terra::plot(annual_precip_2018)
+
+#Lets turn it into a function
+annual_precp <- function(year, var, dir, state_name = "Oregon"){
+  states_sf <- tigris::states(year = 2024)
+  state_boundary <- states_sf[states_sf$NAME == state_name, ] #getting OR shp file
+  
+  # Process covariates for the full year and whatever variable you are using
+  x <- process_covariates(
+    covariate = "gridmet",
+    variable  = var,
+    date      = c(paste0(year, "-01-01"), paste0(year, "-12-31")),
+    path      = file.path(dir)
+  )
+  
+  # Reproject state boundary to match raster CRS
+  state_proj <- terra::project(terra::vect(state_boundary), crs(x))
+  
+  # Crop and mask raster to state boundary
+  crop <- terra::crop(x, state_proj)
+  mask <- terra::mask(crop, state_proj)
+  
+  #  Calculate annual precp
+  precp_x <- sum(mask, na.rm = TRUE)
+  
+  return(precp_x)
+}
+pr_2018<-annual_precp(2018,"Precipitation", "C:/Users/Bryce/Desktop/pr")
+nlyr(pr_2018)
+terra::plot(pr_2018)
+#it works 
 ```
 
