@@ -5,7 +5,15 @@ date: "2025-11-10"
 output: html_document
 ---
 ##Functions used for accessing and processing gridMAT climate data 
-
+**Download and install needed packages**
+install.packages("amadeus")
+install.packages("tigris")
+install.packages("terra")
+install.packages("sf")
+library(terra)
+library(tigris)
+library(amadeus)
+library(sf)
 
 **Downloading gridMAT data**
 ```{r setup, include=FALSE}
