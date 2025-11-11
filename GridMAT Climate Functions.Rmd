@@ -99,3 +99,13 @@ tmean <- function(tmmn, tmmx, year, out_dir = getwd()) {
 
 ```
 
+Validation
+```{r}
+#some checks
+list.files("dir")
+class(result) 
+nlyr(result)
+terra::plot(result)
+summary(values(result))
+```
+

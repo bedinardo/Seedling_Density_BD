@@ -56,30 +56,42 @@ Filter for year wanted(2013 - 2022 one complete inventory cycle of most recent)
 
 Great now we have cleaned seedling density for all species that occur in each plot throughout the state in that given year this is our *responds variable*
 
-**Climate Data Cleaning and Calculation**
+**Climate Data Acquisition, Cleaning and Calculation**
 
-Still in the works here, 
+Climate data will be download from GridMAT using using the download_data function from the amadeus package.
 
-But, high level
-will need terra package
+Each download will be for a specific year and climatic variable. The three main once I will get is Minimum Near-Surface Air Temperature, Maximum Near-Surface Air Temperature, and precipitation. From the function will be a downloaded .nc file, ready to be processed. 
+list.files() will be used to make sure download succeeded and to check the correct directory name to be used in the next step. 
 
-Step one, down load raster layer stack for each each year 
-Two: apply an OR shp mask to the area
-Three: for each year, calc min, max, avg temp, and avg perp
-Four: have this data all in a raster stack for a single year (I think)
-Five: make sure everything seems right
-spatraster is the name of the thing I want that is a raster layerstack (multiple values for a pixel)
- 
+Once acquire I will have a function that takes which ever variable and does the following.
+
+Inputs: year, climate variable, and directory
+Output: yearly mean raster data with the Oregon vector. Then there is an if statement, where if the variable is either Minimum Near-Surface Air Temperature or Maximum Near-Surface Air Temperature. Or annual precip
+
+Processes the covariates using the process_covariates function, then get a shp file for Oregon using tirgirs library, re-object the Oregon shp to the same crs as the rasters that come from process_covariates. Then crop and mask the raster data with the Oregon vector. Then there is an if statement, where if the variable is either Minimum Near-Surface Air Temperature or Maximum Near-Surface Air Temperature, then terra::mean is used to calculate the mean max and min yearly temperature, outputting a single raster, with the units in C, and then saving it as a .TIF. If the variable is precipitation, then sum is used to calculate annual rainfall, single raster download and saved as .TIF
+
+I will also have a temperature mean function, that simply takes the outputs from the max and min temperature variables and computes a yearly average temperature.
+
+This will be done for all years of interest, 2022-2014 (matches the survey time frame of the last fully completed FIA survey)
+
+To validate the successful completion of data process, I will used: class(result), nlyr(result)
+terra::plot(result)
+summary(values(result))
+To make sure the data type is as expected, is the expected number of raster layers, it plots as expect, and values are within a reasonable range. 
+
+**Further data wrangling, combining climate and FIA**
 
 
 
+**Statistical tests**
 
 
 
+**Visualizations**
 
 
 
-
+**Risks**
 
 
 
