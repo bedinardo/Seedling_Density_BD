@@ -17,7 +17,7 @@ library(sf)
 
 **Downloading gridMAT data**
 ```{r setup, include=FALSE}
-#This function take the year and climatic varaible of intrest and will download a .ND file to the set directory
+#This function take the year and climatic variable of interest and will download a .ND file to the set directory
 gridMET_download <- function(year, var, dir) {
   
   # Download gridMET data for the year

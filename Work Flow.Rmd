@@ -2,6 +2,8 @@
 title: "Seedling Density Work Flow"
 output: html_document
 date: "2025-11-06"
+bibliography: references.bib
+csl: apa.csl
 ---
 # Climatic drivers of Oregon Seedling Density 
 
@@ -43,18 +45,29 @@ Include a description the the statistical test you will use, and how you will ap
 
 **Cleaning and processing FIA data**
 Import all OR FIA data using rFIA 
-Extract Seedling tree per arch (TPA) for each year of data wanted. 
+Extract Seedling tree per archer (TPA) for each year of data wanted. 
 Do this by using rFIA seedling function, I want to seedling density groupby plot, returnSPatial == TRUE, and bySpecies.
-This will give me the TPA for each species in each plot and have then in an Oregon polygon. Not sure yet if I need to provide a shp file for that yet, but easy enough if so.
+This will give me the TPA for each species in each plot and have then in an Oregon polygon.
 
 Now I have a bunch of seedling densities, sorted by plot and species
 *Next lets filter to clean some data*
 Filter for only forest plots (PLOT_STATUS_CD == 1)
+Filter for only target speceis
+Filter for each plot CN only showing up once
 Remove TPA NAs and 0 values or "unknown" 
 Remove sites with missing Lat or Long values
-Filter for year wanted(2013 - 2022 one complete inventory cycle of most recent)
+Filter for year wanted(2014 - 2022 one complete inventory cycle of most recent)
+*Function and loops*
+Write a function that take year and seedling species as an input, and uses all of the previous steps to create a raster of seedling density at all plots measure in that year for a single species and recreate a raster.
 
-Great now we have cleaned seedling density for all species that occur in each plot throughout the state in that given year this is our *responds variable*
+Now create a loop that loops through all target years and all target species, ending with a bunch of different rasters for each year, and within each year density at all plots look at each target species. 
+
+Make sure crs matches climate and landowner data (WGS 1984, lat long)
+
+
+Great now we have cleaned seedling density for all target species that occur in each plot throughout the state in for a given year this is our *responds variable*
+
+
 
 **Climate Data Acquisition, Cleaning and Calculation**
 
@@ -79,13 +92,75 @@ terra::plot(result)
 summary(values(result))
 To make sure the data type is as expected, is the expected number of raster layers, it plots as expect, and values are within a reasonable range. 
 
-**Further data wrangling, combining climate and FIA**
-
+**Landowner**
+My advisor will provide me a vector shp with landowner that is geo referenced, convert vector to raster, match crs with climate data, save as raster. 
 
 
 **Statistical tests**
+Now that I have assembled my predictor variables — minimum temperature (tmmn), maximum temperature (tmmx), mean temperature (tmean), annual precipitation (precip), and landowner category — for each year, and my response variable — seedling density for each species and year — I can begin modeling. The goal is to evaluate whether climate and landownership can predict seedling density patterns across Oregon.
+
+*Base training Overview*
+
+To begin, I will fit a random forest regression model using the ranger package, focusing on Douglas-fir seedling density in 2022
+
+*Responds variable*
+I start by preparing the response variable: the density of Douglas-fir seedlings recorded at FIA plots in Oregon during 2022. I load the raster I previously generated from FIA data and use either terra::extract() or as.data.frame() to convert it into a plot-level data frame. This data frame includes seedling density values and the corresponding latitude and longitude coordinates for each plot.
 
 
+*Predictor variables*
+Next, I load the climate and landowner rasters for 2022. Since all data layers are georeferenced (typically in WGS 1984 latitude-longitude), I can extract raster pixel values that correspond to each FIA plot location. These values are stored in a data frame with plot IDs and predictor variables.
+
+To do this, I convert my FIA raster into a vector of spatial points — one point per plot — using terra::as.points() or a similar function. This allows me to overlay the plot points onto the climate and landowner rasters and extract values at those exact locations. If needed, I reproject the rasters or vector data to ensure all layers share a common CRS.
+
+Training Data Frame complete
+
+At this point, I have a complete training data frame. Each row represents a plot, and columns include: the respond variable (seed density), and predictor variable. all as numeric
+
+*Ready to run random forest regression model*
+
+Training data is ready to role, I can now use the ranger package to fit a random forest regession model to my data. 
+
+Since this is a random item make sure I set.seed.
+Then I can use the ranger function to fit the model. Based on online documentation on ranger I will set the  importance metric to "permutation" to obtain unbiased variable importance scores, and use scale.permutation.importance = TRUE to match the scaling used in traditional random forest implementations. (uses 500 trees, with three random predictors at each split)
+
+Hopefully I won't get an error
+
+*Model Evaluation and goodness of fit*
+After fitting the model, I assess its performance using out-of-bag (OOB) metrics provided by ranger, including R² (Indicates the proportion of variance in seedling density explained by the model) and root mean squared error (RMSE) (Quantifies the average prediction error in original units). 
+These metrics provide a baseline for how well climate and landownership explain variation
+I will also plot the OOB cross-validation predictions
+
+*Variable importance*
+To interpret the model, I extract variable importance scores using ranger::importance() and visualize them using the vip package. Revealing which predictor most strongly influenced seedling density patterns for that species and year window
+
+*Auto mating for all combination*
+Great, I have run a random forest analysis for a single year/sp combo. Lets make some functions and run a loop to get all data for all years and sp combos 
+
+*Functions*
+One
+Build function for training data frame
+Inputs: seedling raster, climate rasters (4 of them seperate or as a list in a single), landowner raster.
+
+Output: training dataframe from that year sp combo
+
+Two
+function for running ranger
+
+input: training data frame
+output: Model
+
+Three
+Model eval
+input: model, training data frame
+output: rmse, r2m, importance, OOB cross-validation predictions plot 
+
+Four
+Variable importance 
+input: model
+Output: graph variables level of importance
+
+*Do it for all*
+With all the function made, and hopefully all bugs fixed, I will loop over all sp/yr combos using these functions. Storing my results in a structured list, including fitted models, evaluation metrics, training data, and variable importance. 
 
 **Visualizations**
 
