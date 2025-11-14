@@ -9,16 +9,18 @@ csl: apa.csl
 
 **By Bryce DiNardo**
 
-## Literature review (~5 paragraphs)
+## Literature review 
+For forests to maintain their structure and function, successful regeneration of existing species at similar densities is essential. Shifts in seedling species compositions can signal a change in the forest community structure, such as a succession change towards a shade tolerant old-growth away from a shade-intolerant new growth forest (@kirk_changes_2021). These shifts can be seen early in changes in seedling density, which is a measure of recruitment strength and an early indicator of whether a stand can replace its canopy. Low or declining densities signal potential regeneration failure and reduced future structural complexity, while cohort pulses of very high density alter competition and future mortality patterns (@johnson_conspecific_2012; @zhu_prevalence_2015). Contemporary shifts in climate have altered growing conditions relative to those under which many forests established, changing the window of conditions that allow seedlings and saplings to survive and grow (@brown_climate_2005). Seedlings and saplings are more sensitive to these climate changes than mature trees, resulting in current climatic conditions strongly influencing recruitment success and the future composition of forests (@qiu_niche_2021; @bell_early_2014). This climatic filtering interacts with increasing disturbance pressure—particularly wildfire—to determine which species can reestablish after canopy‑opening events and which populations face regeneration failure, making species density a practical metric for managers prioritizing seed‑source protection or assisted regeneration (@laughlin_patterns_2023; @petrie_widespread_2023).
 
-### Paragraph 1 — Problem & significance (big‑picture reviews)
-…
 
 ### Paragraph 2–3 — Past work & data landscape (who/where/how; gaps)
-…
+Past research shows that climate, disturbance, and local biotic interactions jointly shape regeneration, but their relative importance varies by scale, species, and region. Petrie et al. (2023) found that climatic and environmental conditions strongly predict regeneration failure in ponderosa pine, with sustained high air temperatures and rising winter minima linked to widespread recruitment collapse. Other studies demonstrate that climatic niches for adults, fecundity, and recruits can diverge, so adult distributions do not reliably predict recruitment success under contemporary conditions (@bell_early_2014; @qiu_niche_2021). Dendroecological work ties episodic recruitment pulses to wet periods and shows reduced establishment during droughts or sustained warming, implying that canopy opening alone will not guarantee successful regeneration when post‑disturbance climates are unfavorable (@brown_climate_2005). Post‑fire and regional field studies further identify seed‑source proximity, pre‑fire stand age, and cooler, wetter microsites as strong enhancers of early conifer regeneration, while warming and drying increase the risk of failure (@laughlin_patterns_2023). On a more local scale, conspecific negative density dependence and density-dependent interactions between seedlings, as well as between seedlings and mature trees, play a critical role in regulating forest population dynamics. In denser, more common species, stronger intraspecific competition helps maintain ecosystem diversity (@johnson_conspecific_2012; @zhu_prevalence_2015). Consequently, local species abundance patterns, climate, and disturbance regimes interact to shape seedling density—and ultimately influence future forest composition and structure.
+
+Many studies have examined seedling-to-sapling transitions or other recruitment metrics, often focusing on a single species (@petrie_widespread_2023) or a specific region following disturbance—typically fire—using long-term field data collected over a decade or more (@laughlin_patterns_2023). While these studies offer valuable insights, they are often difficult to replicate or too narrowly scoped to inform broader forest management decisions, especially for local and state land managers. Some researchers have addressed reproducibility challenges by using publicly available data from the U.S. Forest Service’s Forest Inventory and Analysis (FIA) program, a nationwide forest monitoring effort that provides standardized measurements across space and time. FIA plots are resurveyed every 5 to 10 years, with consistent data collection protocols that include tree species, plot identifiers, and seedling counts. Although previous studies have used FIA data to examine seedling dynamics, they often aggregate across multiple plots (@johnson_conspecific_2012) or rely on derived metrics rather than the straightforward seedling density (trees per hectare) which can be calculated from the database (@qiu_niche_2021). To my knowledge, no studies have used this off-the-shelf seedling density metric in a simple, reproducible way as I do here. Additionally, while many prior studies incorporate PRISM climate data for spatial modeling, PRISM—though highly accurate—is less modular than GridMET, which offers daily resolution and customizable temporal scales while still incorporating PRISM’s spatial interpolation (@abatzoglou_development_2013). Finally, although most reviewed studies explore changes in forest composition in response to climate, disturbance, or density, none explicitly include land ownership as a predictor, and few consider whether climatic variables act as consistent drivers of seedling diversity or density over time.
 
 ### Paragraph 4 — Purpose & why now
-…
+As climate conditions continue to shift across the United States, it is increasingly important for land managers to understand whether these changes are affecting seedling recruitment and, by extension, forest composition and structure. Therefore it is imperative to identify the primary drivers behind any observed shifts, whether they stem from climatic variables or land management practices. By using publicly available data sources such as FIA derived seedling density, land ownership classifications, and annual climate variables from GridMET, I evaluate how climate and ownership shape seedling density across Oregon forests over time. Through species and year specific random forest models, I predict seedling density (seedlings per hectare) for a subset of ecologically and economically important tree species. This approach provides reproducible insight into whether Oregon’s forests are shifting, whether those shifts are driven by climate or land ownership, and if these drivers are consistent across years. By integrating ownership and climate predictors in a modular framework, I provide an accessible tool for understanding recruitment dynamics across diverse forest contexts.
+
 
 ### Paragraph 5 — Hypotheses (directional) & brief rationale
 - H1: … (I predict … because …)
@@ -65,7 +67,7 @@ Now create a loop that loops through all target years and all target species, en
 Make sure crs matches climate and landowner data (WGS 1984, lat long)
 
 
-Great now we have cleaned seedling density for all target species that occur in each plot throughout the state in for a given year this is our *responds variable*
+Great now we have cleaned seedling density for all target species that occur in each plot throughout the state in for a given year this is our responds variable
 
 
 
@@ -163,6 +165,11 @@ Output: graph variables level of importance
 With all the function made, and hopefully all bugs fixed, I will loop over all sp/yr combos using these functions. Storing my results in a structured list, including fitted models, evaluation metrics, training data, and variable importance. 
 
 **Visualizations**
+Need to kinda talk about null hypothesis adn stuff I think so 
+Statistical Testing via Permutation
+To assess the significance of predictor effects, I use permutation-based variable importance within the random forest framework. The implicit null hypothesis is that a given predictor has no relationship with seedling density — i.e., shuffling its values should not degrade model performance. Programmatically, this is implemented in the ranger package by randomly permuting each predictor and measuring the increase in prediction error. A larger increase indicates greater importance, suggesting that the predictor contributes meaningfully to the model. This approach avoids parametric assumptions and provides an intuitive, model-based test of predictor relevance.
+
+If you want to go further, you could implement a custom permutation test where you shuffle the response variable (TPA) and refit the model multiple times to generate a null distribution of R² values. Let me know if you'd like help writing that code or describing it in prose.
 
 
 

@@ -96,3 +96,13 @@ csl: apa.csl
 **Evaluation** This was a massive study, and used a ton of different data sources and models. I think they could have been a bit clearer in their methods about data acquisition and what each model did in order to increase replicability. 
 
 **Relevance** Another study shows that recruitment/ seedling/ sapling growth is dependent on climate and so it can be assumed that as climate change, so will the diversity of seedlings, leading to possible forest structure shifts over time. Also address gathering seedling data from FIA, so helpful in methods as well. 
+
+
+article{abatzoglou_development_2013,
+	title = {Development of gridded surface meteorological data for ecological applications and modelling},
+	volume = {33},
+	copyright = {Copyright © 2011 Royal Meteorological Society},
+	issn = {1097-0088},
+	url = {https://onlinelibrary.wiley.com/doi/abs/10.1002/joc.3413},
+	doi = {10.1002/joc.3413},
+citation [@abatzoglou_development_2013]
