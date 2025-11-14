@@ -2,23 +2,21 @@
 title: "Seedling Density Work Flow"
 output: html_document
 date: "2025-11-06"
-bibliography: references.bib
+bibliography: Seedling_Density_References.bib
 csl: apa.csl
 ---
-# Climatic drivers of Oregon Seedling Density 
+##Climatic drivers of Oregon Seedling Density
 
 **By Bryce DiNardo**
 
-## Literature review 
+**Introduction**
+
 For forests to maintain their structure and function, successful regeneration of existing species at similar densities is essential. Shifts in seedling species compositions can signal a change in the forest community structure, such as a succession change towards a shade tolerant old-growth away from a shade-intolerant new growth forest (@kirk_changes_2021). These shifts can be seen early in changes in seedling density, which is a measure of recruitment strength and an early indicator of whether a stand can replace its canopy. Low or declining densities signal potential regeneration failure and reduced future structural complexity, while cohort pulses of very high density alter competition and future mortality patterns (@johnson_conspecific_2012; @zhu_prevalence_2015). Contemporary shifts in climate have altered growing conditions relative to those under which many forests established, changing the window of conditions that allow seedlings and saplings to survive and grow (@brown_climate_2005). Seedlings and saplings are more sensitive to these climate changes than mature trees, resulting in current climatic conditions strongly influencing recruitment success and the future composition of forests (@qiu_niche_2021; @bell_early_2014). This climatic filtering interacts with increasing disturbance pressure—particularly wildfire—to determine which species can reestablish after canopy‑opening events and which populations face regeneration failure, making species density a practical metric for managers prioritizing seed‑source protection or assisted regeneration (@laughlin_patterns_2023; @petrie_widespread_2023).
 
-
-### Paragraph 2–3 — Past work & data landscape (who/where/how; gaps)
 Past research shows that climate, disturbance, and local biotic interactions jointly shape regeneration, but their relative importance varies by scale, species, and region. Petrie et al. (2023) found that climatic and environmental conditions strongly predict regeneration failure in ponderosa pine, with sustained high air temperatures and rising winter minima linked to widespread recruitment collapse. Other studies demonstrate that climatic niches for adults, fecundity, and recruits can diverge, so adult distributions do not reliably predict recruitment success under contemporary conditions (@bell_early_2014; @qiu_niche_2021). Dendroecological work ties episodic recruitment pulses to wet periods and shows reduced establishment during droughts or sustained warming, implying that canopy opening alone will not guarantee successful regeneration when post‑disturbance climates are unfavorable (@brown_climate_2005). Post‑fire and regional field studies further identify seed‑source proximity, pre‑fire stand age, and cooler, wetter microsites as strong enhancers of early conifer regeneration, while warming and drying increase the risk of failure (@laughlin_patterns_2023). On a more local scale, conspecific negative density dependence and density-dependent interactions between seedlings, as well as between seedlings and mature trees, play a critical role in regulating forest population dynamics. In denser, more common species, stronger intraspecific competition helps maintain ecosystem diversity (@johnson_conspecific_2012; @zhu_prevalence_2015). Consequently, local species abundance patterns, climate, and disturbance regimes interact to shape seedling density—and ultimately influence future forest composition and structure.
 
 Many studies have examined seedling-to-sapling transitions or other recruitment metrics, often focusing on a single species (@petrie_widespread_2023) or a specific region following disturbance—typically fire—using long-term field data collected over a decade or more (@laughlin_patterns_2023). While these studies offer valuable insights, they are often difficult to replicate or too narrowly scoped to inform broader forest management decisions, especially for local and state land managers. Some researchers have addressed reproducibility challenges by using publicly available data from the U.S. Forest Service’s Forest Inventory and Analysis (FIA) program, a nationwide forest monitoring effort that provides standardized measurements across space and time. FIA plots are resurveyed every 5 to 10 years, with consistent data collection protocols that include tree species, plot identifiers, and seedling counts. Although previous studies have used FIA data to examine seedling dynamics, they often aggregate across multiple plots (@johnson_conspecific_2012) or rely on derived metrics rather than the straightforward seedling density (trees per hectare) which can be calculated from the database (@qiu_niche_2021). To my knowledge, no studies have used this off-the-shelf seedling density metric in a simple, reproducible way as I do here. Additionally, while many prior studies incorporate PRISM climate data for spatial modeling, PRISM—though highly accurate—is less modular than GridMET, which offers daily resolution and customizable temporal scales while still incorporating PRISM’s spatial interpolation (@abatzoglou_development_2013). Finally, although most reviewed studies explore changes in forest composition in response to climate, disturbance, or density, none explicitly include land ownership as a predictor, and few consider whether climatic variables act as consistent drivers of seedling diversity or density over time.
 
-### Paragraph 4 — Purpose & why now
 As climate conditions continue to shift across the United States, it is increasingly important for land managers to understand whether these changes are affecting seedling recruitment and, by extension, forest composition and structure. Therefore it is imperative to identify the primary drivers behind any observed shifts, whether they stem from climatic variables or land management practices. By using publicly available data sources such as FIA derived seedling density, land ownership classifications, and annual climate variables from GridMET, I evaluate how climate and ownership shape seedling density across Oregon forests over time. Through species and year specific random forest models, I predict seedling density (seedlings per hectare) for a subset of ecologically and economically important tree species. This approach provides reproducible insight into whether Oregon’s forests are shifting, whether those shifts are driven by climate or land ownership, and if these drivers are consistent across years. By integrating ownership and climate predictors in a modular framework, I provide an accessible tool for understanding recruitment dynamics across diverse forest contexts.
 
 
@@ -26,17 +24,13 @@ As climate conditions continue to shift across the United States, it is increasi
 - H1: … (I predict … because …)
 - H2: …
 
-## Dataset identification
-- Dataset A (URL/DOI): collector, methods, columns/units …
-- OBA → transformed to … (plan and rationale) …
+## Datasets 
+FIA database, accessed using rFIA (ownership data too but not primary spot to get right now)
+Climatology Lab gridMET data, accessed through amadeus package comes in .nc files
+Landowner, provide by Melissa as a .shp file for state of OR 
+OR shp file for masking, from sf package. 
 
-## Workflow plan (prose)
-1) Cleaning & validation: …  
-2) Aggregations/derivations: …  
-3) Functions/loops (inputs → outputs): …  
-4) Statistical test + programmatic implementation: …  
-5) Planned visualizations/tables: …  
-6) Risks & mitigations: …
+##Workflow plan
 
 In pros, please describe the workflow you will use tidy your raw data, manipulate and summarize it in relevant ways, test you hypothesis, and visualize it.The goal here is to develop a logic to your workflow before you code.
 
@@ -99,6 +93,7 @@ My advisor will provide me a vector shp with landowner that is geo referenced, c
 
 
 **Statistical tests**
+
 Now that I have assembled my predictor variables — minimum temperature (tmmn), maximum temperature (tmmx), mean temperature (tmean), annual precipitation (precip), and landowner category — for each year, and my response variable — seedling density for each species and year — I can begin modeling. The goal is to evaluate whether climate and landownership can predict seedling density patterns across Oregon.
 
 *Base training Overview*
@@ -106,10 +101,12 @@ Now that I have assembled my predictor variables — minimum temperature (tmmn),
 To begin, I will fit a random forest regression model using the ranger package, focusing on Douglas-fir seedling density in 2022
 
 *Responds variable*
+
 I start by preparing the response variable: the density of Douglas-fir seedlings recorded at FIA plots in Oregon during 2022. I load the raster I previously generated from FIA data and use either terra::extract() or as.data.frame() to convert it into a plot-level data frame. This data frame includes seedling density values and the corresponding latitude and longitude coordinates for each plot.
 
 
 *Predictor variables*
+
 Next, I load the climate and landowner rasters for 2022. Since all data layers are georeferenced (typically in WGS 1984 latitude-longitude), I can extract raster pixel values that correspond to each FIA plot location. These values are stored in a data frame with plot IDs and predictor variables.
 
 To do this, I convert my FIA raster into a vector of spatial points — one point per plot — using terra::as.points() or a similar function. This allows me to overlay the plot points onto the climate and landowner rasters and extract values at those exact locations. If needed, I reproject the rasters or vector data to ensure all layers share a common CRS.
@@ -128,17 +125,21 @@ Then I can use the ranger function to fit the model. Based on online documentati
 Hopefully I won't get an error
 
 *Model Evaluation and goodness of fit*
+
 After fitting the model, I assess its performance using out-of-bag (OOB) metrics provided by ranger, including R² (Indicates the proportion of variance in seedling density explained by the model) and root mean squared error (RMSE) (Quantifies the average prediction error in original units). 
 These metrics provide a baseline for how well climate and landownership explain variation
 I will also plot the OOB cross-validation predictions
 
 *Variable importance*
+
 To interpret the model, I extract variable importance scores using ranger::importance() and visualize them using the vip package. Revealing which predictor most strongly influenced seedling density patterns for that species and year window
 
 *Auto mating for all combination*
+
 Great, I have run a random forest analysis for a single year/sp combo. Lets make some functions and run a loop to get all data for all years and sp combos 
 
 *Functions*
+
 One
 Build function for training data frame
 Inputs: seedling raster, climate rasters (4 of them seperate or as a list in a single), landowner raster.
@@ -162,6 +163,7 @@ input: model
 Output: graph variables level of importance
 
 *Do it for all*
+
 With all the function made, and hopefully all bugs fixed, I will loop over all sp/yr combos using these functions. Storing my results in a structured list, including fitted models, evaluation metrics, training data, and variable importance. 
 
 **Visualizations**
@@ -195,23 +197,5 @@ If you want to go further, you could implement a custom permutation test where y
 
 
 
-##Work Flow
-#Part 1: FIA data aquistion and processing
-**Load packages**
-install.packages("rFIA")
-library("rFIA")
-library("dplyr")
-library("tidyr")
 
-**Data aquistion**
-Get all FIA data for Oregon by using rFIA
-```{r}
-options(timeout = 600) #Need to increase download time since file is so large
-#Grab the data
-OR <- getFIA(states = 'OR', dir = "C:/Users/dinardo/OneDrive - University Of Oregon/FIA", load = FALSE) #Install the data
-OR <- readFIA(dir = "C:/Users/dinardo/OneDrive - University Of Oregon/FIA",
-              states = 'OR',
-              nCores = 1,
-              inMemory = TRUE)
-```
 
