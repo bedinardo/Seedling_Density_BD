@@ -211,12 +211,20 @@ H2: Line chart of climate variable average values across all plots for each year
 
 H3: Box plots assess the temporal consistency of landownership importance across years.
 
-I know that this is a lot, especially considering multiple species, I might have to cut back but hopefully will be able to write function to automate a lot of the process to save time. I will also focus my enegery on visualizing the more exciting and important data. 
+I know that this is a lot, especially considering multiple species, I might have to cut back but hopefully will be able to write function to automate a lot of the process to save time. I will also focus my energy on visualizing the more exciting and important data. 
 
 
 **Risks and Mitigation**
 
+*FIA*
 
+Lots of risks with FIA data, number one is missing or incomplete data for seedling count. This could lead to some bias in training for that year, not using all the data that could be present. Not a ton you can do about missing data other than omit NAs and do quailty checks
+
+Moreover with FIA. Big risk with unevenly distributed data collection across private, state, and federal lands. This could really impact the importance of landownership as a predictor. To mitigate, track sample sizes by ownership class, and interpret with this important caviot in mind. Also on the same line with landowner, some FIA plots lat longs are fuzzed, so this could throw off climate data, however the fuzzing should be done in a representative way of the actually place the plot are taken, hopefully not throwing off climate data too much. Plus fuzzing is normally about a change within 1km of actually site location and climate data is 4 km res.
+
+*Climate*
+
+I could and likely will have a temporal mismatch between climate and recruitment. Where a sort of lag effect might exist, if I had more time I could use multi year climate averages. But for this project I think I just need to acknowledge this limitation. 
 
 
 
