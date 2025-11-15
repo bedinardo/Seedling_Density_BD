@@ -21,39 +21,51 @@ As climate conditions continue to shift across the United States, it is increasi
 
 
 ### Paragraph 5 — Hypotheses (directional) & brief rationale
-- H1: … (I predict … because …)
-- H2: …
+- H1: I predict annual precipitation and mean temperature will be the most impactful climate drivers of seedling density across species and years. This prediction is based on prior studies showing that these climate variables strongly influence seedling recruitment, establishment success, and early survival across a range of forest types.
+
+- H2: I predict the importance of climate variables in explaining seedling density will be greater in years with extreme climate conditions and lower in years with near-average conditions because in more extreme climate years, climate becomes a limiting variable to growth and recruitment leading to more predictive power in the model for extreme years. 
+
+-H3:Hypothesis: I predict that the influence of landownership on seedling density will remain consistent across years, reflecting stable management practices and recurring environmental conditions. Because landowners often apply similar treatments, disturbance regimes, or access restrictions year after year, their impact on recruitment dynamics is expected to be temporally stable.
+
+
+
 
 ## Datasets 
-FIA database, accessed using rFIA (ownership data too but not primary spot to get right now)
-Climatology Lab gridMET data, accessed through amadeus package comes in .nc files
+
+**FIA**
+
+FIA database, accessed using rFIA (ownership data too but not primary spot to get right now) (https://research.fs.usda.gov/products/dataandtools/fia-datamart) Data comes in a number of different tables, all consisting of a CN number that can be used to connect plots to different attributes measured in those plots and conditions within and across. Col are often variables and rows are values per an individual (TREE) or species (SEEDLING)
+
+**Climate**
+
+Climatology Lab gridMET data, accessed through amadeus package comes in .nc files (https://www.climatologylab.org/gridmet.html), these .nc get processed as spat raster layer stack at 4km res with each layer is a raster of the USA where each pixel is a value for the climate condition of interest 
+
+**Landownwer**
 Landowner, provide by Melissa as a .shp file for state of OR 
 OR shp file for masking, from sf package. 
 
 ##Workflow plan
 
-In pros, please describe the workflow you will use tidy your raw data, manipulate and summarize it in relevant ways, test you hypothesis, and visualize it.The goal here is to develop a logic to your workflow before you code.
-
-Include any needed cleaning steps (e.g., “remove non-species such as ‘fly’ from the species column”)
-Include any aggregation steps (e.g., “count the number of entries by region and year to calculate species richness”).
-Include descriptions of any functions/for loops you will write.
-Include a description the the statistical test you will use, and how you will apply it programatically (i.e., I will simulate the null hypothesis by shuffling the labels…“)
-
 **Cleaning and processing FIA data**
+
 Import all OR FIA data using rFIA 
 Extract Seedling tree per archer (TPA) for each year of data wanted. 
 Do this by using rFIA seedling function, I want to seedling density groupby plot, returnSPatial == TRUE, and bySpecies.
 This will give me the TPA for each species in each plot and have then in an Oregon polygon.
 
 Now I have a bunch of seedling densities, sorted by plot and species
+
 *Next lets filter to clean some data*
+
 Filter for only forest plots (PLOT_STATUS_CD == 1)
 Filter for only target speceis
 Filter for each plot CN only showing up once
 Remove TPA NAs and 0 values or "unknown" 
 Remove sites with missing Lat or Long values
 Filter for year wanted(2014 - 2022 one complete inventory cycle of most recent)
+
 *Function and loops*
+
 Write a function that take year and seedling species as an input, and uses all of the previous steps to create a raster of seedling density at all plots measure in that year for a single species and recreate a raster.
 
 Now create a loop that loops through all target years and all target species, ending with a bunch of different rasters for each year, and within each year density at all plots look at each target species. 
@@ -62,8 +74,6 @@ Make sure crs matches climate and landowner data (WGS 1984, lat long)
 
 
 Great now we have cleaned seedling density for all target species that occur in each plot throughout the state in for a given year this is our responds variable
-
-
 
 **Climate Data Acquisition, Cleaning and Calculation**
 
@@ -89,9 +99,13 @@ summary(values(result))
 To make sure the data type is as expected, is the expected number of raster layers, it plots as expect, and values are within a reasonable range. 
 
 **Landowner**
+
 My advisor will provide me a vector shp with landowner that is geo referenced, convert vector to raster, match crs with climate data, save as raster. 
 
+##Testsing 
 
+To test the null hypothesis that my predictor variables have no relationship with seedling density, I use a permutation-based variable importance approach within the random forest framework. Using the ranger package, I assess each predictor by randomly shuffling its values and measuring the resulting increase in prediction error. A larger increase in error indicates greater importance, suggesting that the predictor contributes meaningfully to explaining variation in the response variable.
+  
 **Statistical tests**
 
 Now that I have assembled my predictor variables — minimum temperature (tmmn), maximum temperature (tmmx), mean temperature (tmean), annual precipitation (precip), and landowner category — for each year, and my response variable — seedling density for each species and year — I can begin modeling. The goal is to evaluate whether climate and landownership can predict seedling density patterns across Oregon.
@@ -103,7 +117,6 @@ To begin, I will fit a random forest regression model using the ranger package, 
 *Responds variable*
 
 I start by preparing the response variable: the density of Douglas-fir seedlings recorded at FIA plots in Oregon during 2022. I load the raster I previously generated from FIA data and use either terra::extract() or as.data.frame() to convert it into a plot-level data frame. This data frame includes seedling density values and the corresponding latitude and longitude coordinates for each plot.
-
 
 *Predictor variables*
 
@@ -167,16 +180,41 @@ Output: graph variables level of importance
 With all the function made, and hopefully all bugs fixed, I will loop over all sp/yr combos using these functions. Storing my results in a structured list, including fitted models, evaluation metrics, training data, and variable importance. 
 
 **Visualizations**
-Need to kinda talk about null hypothesis adn stuff I think so 
-Statistical Testing via Permutation
-To assess the significance of predictor effects, I use permutation-based variable importance within the random forest framework. The implicit null hypothesis is that a given predictor has no relationship with seedling density — i.e., shuffling its values should not degrade model performance. Programmatically, this is implemented in the ranger package by randomly permuting each predictor and measuring the increase in prediction error. A larger increase indicates greater importance, suggesting that the predictor contributes meaningfully to the model. This approach avoids parametric assumptions and provides an intuitive, model-based test of predictor relevance.
 
-If you want to go further, you could implement a custom permutation test where you shuffle the response variable (TPA) and refit the model multiple times to generate a null distribution of R² values. Let me know if you'd like help writing that code or describing it in prose.
+ *Model fit*
+ 
+To evaluate model performance, I generate scatterplots of out-of-bag (OOB) predictions versus observed seedling densities for each species-year model. These plots include a 1:1 reference line and are used to visually assess model accuracy, bias, and spread. They complement quantitative metrics such as R² and RMSE. I will have to do this will all of the forest I run with each sp/year combo, however, I will select only the interesting and or good representative once for my poster
+
+Function
+inputs: OOB, seedling density, year
+Out: scatterplot
+
+Loop through all sp/year combos 
+
+*Variable importance visualization*
+
+To interpret which predictors most strongly influenced seedling density, I extract permutation-based variable importance scores from each fitted random forest model. I visualize these scores using horizontal bar plots, highlighting the top predictors for each species-year combination. Nice way to see for everyone what was important. I will also color it in a way where climate predictor will be visually different from landowner
+
+*Synthesis across species and years*
+
+To explore broader patterns, I aggregate variable importance scores across all models and visualize them using, a heat map table, with species in the rows and year in column and greatest predictor at the values, and have the color coded to really pop! Then some line plots. Showing how the importance of specific predictors change over time for a specific species. Lastly use box plot to see what top predictors were consists and which ones only matter a lot a few times.
+
+*Map*
+
+An awesome map of a species that has an interesting result (variation in of predictors over years), where I have a map of OR with each plot location on it. The symbol of the plot location will be whatever the great predictor was, the color will correspond to year, and the size of the symbol will correspond to predictor’s importance. OOO and maybe have national forest/state forest boundaries and ecoregions. This might be too much but I will play around with it. 
+
+*Prediction driven visuals* 
+
+H1: Heat map table works for H1 seeing how often precip and tmean show up as top predictors 
+
+H2: Line chart of climate variable average values across all plots for each year, and then points on the line by color or size relating predictor strength 
+
+H3: Box plots assess the temporal consistency of landownership importance across years.
+
+I know that this is a lot, especially considering multiple species, I might have to cut back but hopefully will be able to write function to automate a lot of the process to save time. I will also focus my enegery on visualizing the more exciting and important data. 
 
 
-
-**Risks**
-
+**Risks and Mitigation**
 
 
 
