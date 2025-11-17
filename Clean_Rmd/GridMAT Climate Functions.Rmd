@@ -12,8 +12,14 @@ install.packages("terra")
 install.packages("sf")
 library(terra)
 library(tigris)
-library(amadeus)
 library(sf)
+library(amadeus)
+```{r}
+library(terra)
+library(tigris)
+library(sf)
+library(amadeus)
+```
 
 **Downloading gridMAT data**
 ```{r setup, include=FALSE}
@@ -107,5 +113,77 @@ class(result)
 nlyr(result)
 terra::plot(result)
 summary(values(result))
+```
+Getting all data 2014-2022, starting with 2014
+
+
+```{r}
+tmmn<-"Minimum Near-Surface Air Temperature"
+tmmx<-"Maximum Near-Surface Air Temperature"
+pr<-"Precipitation"
+dir<-"C:/Users/Bryce/Desktop"
+```
+
+```{r}
+gridMET_download(2014,tmmn,dir)
+list.files(dir)
+dir2<-"C:/Users/Bryce/Desktop/Tmmn"
+```
+
+```{r}
+tmmn_2014<-process_annual_gridmet(2014, tmmn, dir2)
+terra::plot(tmmn_2014)
+tmmn_2014
+getwd()
+```
+```{r}
+# Define the years and variables
+years <- 2014:2022
+vars <- c("tmmn", "tmmx", "pr")
+
+# Set your desired output directory
+output_dir <- dir
+
+# Loop through each year and variable
+for (year in years) {
+  for (var in vars) {
+    message(sprintf("Downloading %s for %d...", var, year))
+    gridMET_download(year, var, dir)
+  }
+}
+
+
+```
+Lets see if I can loop though all .nc files now and add in the tmean function to processing
+```{r}
+# Define years and variables
+years <- 2014:2022
+base_dir <- "C:/Users/Bryce/Desktop"
+output_dir <- "C:/Users/Bryce/Desktop/processed"
+
+# Create output directory if needed
+dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+
+# Loop through each year
+for (year in years) {
+  message(sprintf("Processing year %d...", year))
+  
+  # Process tmmn and tmmx
+  tmmn_raster <- process_annual_gridmet(year = year, var = "tmmn", dir = file.path(base_dir, "tmmn"), state_name = "Oregon")
+  tmmx_raster <- process_annual_gridmet(year = year, var = "tmmx", dir = file.path(base_dir, "tmmx"), state_name = "Oregon")
+  
+  # Calculate tmean
+  tmean_raster <- tmean(tmmn = tmmn_raster, tmmx = tmmx_raster, year = year, out_dir = output_dir)
+  
+  # Optionally process pr
+  pr_raster <- process_annual_gridmet(year = year, var = "pr", dir = file.path(base_dir, "pr"), state_name = "Oregon")
+}
+
+```
+Check the data
+```{r}
+tmean_2015<-rast("C:/Users/Bryce/Desktop/processed/tmean_2015.tif")
+terra::plot(tmean_2015)
+minmax(tmean_2015)
 ```
 
