@@ -1,0 +1,121 @@
+---
+title: "FIA Processing"
+author: "Bryce DiNardo"
+date: "2025-11-17"
+output: html_document
+params:
+  species_code: 202
+  years: !r c(2022)
+  resolution: 0.01
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rFIA)
+library(dplyr)
+library(sf)
+library(terra)
+library(ggplot2)
+
+```
+
+## Load in FIA data
+
+
+```{r}
+or_fia <- readFIA("C:/Users/Bryce/OneDrive - University Of Oregon/FIA", nCores = 4)
+```
+
+Get data
+```{r}
+seedling_df <- seedling(
+  db = or_fia,
+  grpBy = c(PLT_CN, SPCD),
+  bySpecies = TRUE,
+  byPlot = TRUE,
+  returnSpatial = TRUE,
+  landType = "forest",
+  method = "annual",
+  treeDomain = SPCD == 202
+)
+
+```
+```{r}
+seedling_df <- seedling(
+  db = or_fia,
+  grpBy = c(PLT_CN, CONDID, SPCD),
+  bySpecies = TRUE,
+  byPlot = TRUE,
+  returnSpatial = TRUE,
+  landType = "forest",
+  method = "annual",
+  treeDomain = SPCD == 202
+)
+
+```
+```{r}
+rlang::last_trace()
+
+```
+```{r}
+or_fia$SEEDLING %>% count(PLT_CN, SPCD) %>% filter(n > 1)
+
+```
+```{r}
+?clipFIA
+```
+```{r}
+findEVALID(
+  db = or_fia,
+  state = "Oregon",
+  year = 2022
+)
+
+?findEVALID
+
+findEVALID(
+  db = or_fia,
+  state = "Oregon",
+  year = 2020,
+  type = "CURR"
+)
+
+```
+```{r}
+or_fia_2022 <- clipFIA(
+  db = or_fia,
+  evalid = 412001,
+  nCores = 4
+)
+
+```
+```{r}
+seedling_df <- seedling(
+  db = or_fia_2022,
+  grpBy = c(PLT_CN, CONDID, SPCD, INVYR),
+  bySpecies = TRUE,
+  byPlot = TRUE,
+  returnSpatial = TRUE,
+  landType = "forest",
+  method = "annual",
+  treeDomain = SPCD == 202
+)
+
+or_fia_2022$SEEDLING %>%
+  count(PLT_CN, CONDID, SPCD) %>%
+  filter(n > 1)
+
+```
+So have work around the
+```{r}
+seedling_raw <- seedling(
+  db = or_fia_2022,
+  byPlot = TRUE,
+  bySpecies = TRUE,
+  landType = "forest",
+  method = "annual",
+  treeDomain = SPCD == 202
+)
+head(seedling_raw)
+```
+

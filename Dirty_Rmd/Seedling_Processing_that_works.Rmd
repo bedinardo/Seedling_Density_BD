@@ -1,0 +1,56 @@
+---
+title: "Seedling_processing2.0"
+author: "Bryce DiNardo"
+date: "2025-11-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rFIA)
+library(dplyr)
+library(sf)
+library(terra)
+library(ggplot2)
+```
+
+## I hope this works
+Right now just looking to get 2022 Douglas-fir TPA and then join with lat long by plot to make a map 
+Get the data tables load up and clip to just the most recent invenotry year set 2012-2022
+```{r cars}
+or_fia <- readFIA("C:/Users/Bryce/OneDrive - University Of Oregon/FIA", nCores = 4)
+or_fia_clip <- clipFIA(or_fia, mostRecent = TRUE)
+```
+Filter SEEDLING table to get douglas-fir and inventory year 2022
+```{r}
+head(or_fia_clip$SEEDLING)
+Seedling_df<-or_fia_clip$SEEDLING %>% 
+  filter(SPCD == 202, INVYR == 2022, !is.na(TREECOUNT_CALC), TREECOUNT_CALC > 0) %>% 
+  select(PLT_CN, SUBP, CONDID, INVYR, SPCD, TREECOUNT_CALC, TPA_UNADJ)
+
+head(Seedling_df)
+
+```
+To calculate TPA (trees per acre) for each plot, we first tidy the seedling data by filtering for Douglas-fir (SPCD == 202) in the 2022 inventory. Each row represents a subplot (SUBP) within a plot (PLT_CN), and includes an estimate of seedling density (TPA_UNADJ) for that subplot.
+Since each plot typically contains four subplots (SUBP 1–4), we sum the TPA_UNADJ values across all subplots that share the same PLT_CN. This gives us the total seedling density (TPA) for Douglas-fir in each plot, expressed in trees per acre.
+```{r}
+Seedling_tpa<-Seedling_df %>% 
+  group_by(PLT_CN) %>% 
+  summarise(TPA = sum (TPA_UNADJ, na.rm = TRUE))
+```
+We see a lot of 74.96528 and 149.93057, that is bacasue the expansiton factor is for every 1 seedling in mircoplot there is 74.96528 seedlings in the acre, so lots of plots of plot have just 1 or 2 seedlings
+
+
+Next I need to join the plot coordinates to the TPA calculations 
+```{r}
+or_fia_clip$PLOT
+#Get PLT_CN, LAT, LON 
+plot_coords <- or_fia_clip$PLOT %>%
+  filter(INVYR == 2022) %>% 
+  select(PLT_CN, LAT, LON) %>%
+  filter(!is.na(LAT), !is.na(LON))
+#Join the two tables
+seedling_spatial<-left_join(Seedling_tpa, plot_coords, by = "PLT_CN") %>% filter(!is.na(TPA), TPA > 0)
+
+```
+
