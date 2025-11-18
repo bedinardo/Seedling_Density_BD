@@ -24,6 +24,7 @@ library(ggplot2)
 
 ```{r}
 or_fia <- readFIA("C:/Users/Bryce/OneDrive - University Of Oregon/FIA", nCores = 4)
+or_fia <- clipFIA(or_fia)
 ```
 
 Get data
@@ -80,16 +81,37 @@ findEVALID(
   type = "CURR"
 )
 
+findEVALID(
+  db = or_fia,
+  state = "Oregon",
+  year = 2022,
+  type = "CURR"
+)
 ```
+Clippung data to just 2022 main tables
 ```{r}
 or_fia_2022 <- clipFIA(
   db = or_fia,
-  evalid = 412001,
+  evalid = 412000,
   nCores = 4
 )
 
+test<-clipFIA(or_fia, mostRecent = TRUE, mask = NULL, matchEval = FALSE,
+        evalid =FALSE , designCD = NULL, nCores = 4)
+head(test)
+unique(test$SEEDLING$INVYR)
+
+head(or_fia)
 ```
+
 ```{r}
+unique(or_fia$SEEDLING$INVYR)
+```
+
+
+
+```{r}
+
 seedling_df <- seedling(
   db = or_fia_2022,
   grpBy = c(PLT_CN, CONDID, SPCD, INVYR),
@@ -117,5 +139,8 @@ seedling_raw <- seedling(
   treeDomain = SPCD == 202
 )
 head(seedling_raw)
-```
 
+unique(seedling_raw$YEAR)
+
+```
+Agh, pretyy much using the seedling function isn't going to work, there are multiple seed inputs uncer the same plot and I'm not how to deal with that issue, so I'm doing to dyplr it up in here and do this myself
