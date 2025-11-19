@@ -50,7 +50,87 @@ plot_coords <- or_fia_clip$PLOT %>%
   select(PLT_CN, LAT, LON) %>%
   filter(!is.na(LAT), !is.na(LON))
 #Join the two tables
-seedling_spatial<-left_join(Seedling_tpa, plot_coords, by = "PLT_CN") %>% filter(!is.na(TPA), TPA > 0)
+seedling_df_latlong<-left_join(Seedling_tpa, plot_coords, by = "PLT_CN") %>% filter(!is.na(TPA), TPA > 0)
+
+max(seedling_df_latlong$TPA)
+```
+Sweet now I have 2022 Douglas fir seedling TPA per a plot with lat long coordinatrs 
+Now I need to make the data table into a shape file, and make sure the datum is correct, their taken in  NAD 83 datum. The approximate latitude of the plot in decimal degrees using NAD 83 datum, but our climate data is in WG 84 so we use crs 4326 which is WGS 84
+```{r}
+#Making our table a spacial feature
+seedling_sf <- st_as_sf(seedling_df_latlong, coords = c("LON", "LAT"), crs = 4326)
+#Visualize
+plot(seedling_spatial["TPA"], main = "Douglas-fir Seedling Density by Plot")
+#Histogram of data
+ggplot(seedling_spatial, aes(x = TPA)) +
+  geom_histogram(binwidth = 100, fill = "forestgreen", color = "white") +
+  labs(
+    title = "Histogram of Douglas-fir Seedling Density (TPA)",
+    x = "Trees per Acre (TPA)",
+    y = "Number of Plots"
+  ) +
+  theme_minimal()
+#Scale log 10
+ggplot(seedling_spatial, aes(x = TPA)) +
+  geom_histogram(binwidth = 0.1, fill = "forestgreen", color = "white") +
+  scale_x_log10() +
+  labs(
+    title = "Log-Scaled Histogram of Douglas-fir Seedling Density (TPA)",
+    x = "Trees per Acre (log10 scale)",
+    y = "Number of Plots"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+# Create a raster template based on the extent of your spatial points
+template_raster <- rast(
+  extent = ext(seedling_sf),
+  resolution = 0.01,  # ~1 km pixels; adjust as needed
+  crs = "EPSG:4326"   # Matches your sf object (WGS84)
+)
+
+tpa_raster <- rasterize(
+  seedling_sf,
+  template_raster,
+  field = "TPA",
+  fun = "mean"  # Averages TPA if multiple plots fall in the same pixel
+)
+
+plot(tpa_raster, main = "Douglas-fir Seedling Density (TPA) — Oregon 2022")
+
+```
+Messing with getting them to be within oregons boundry
+```{r}
+# Get all US states as sf
+states_sf <- tigris::states(year = 2024)
+
+# Filter for Oregon
+oregon <- states_sf[states_sf$NAME == "Oregon", ] %>%
+  st_transform(crs = 4326)  # Match CRS of your seedling_sf
+
+seedling_or <- seedling_sf[oregon, ]  # spatial filter using sf geometry
+
+template_raster <- rast(ext(oregon), resolution = 0.01, crs = "EPSG:4326")
+
+tpa_raster <- rasterize(seedling_or, template_raster, field = "TPA", fun = "mean") 
+
+plot(tpa_raster, main = "Douglas-fir Seedling Density (TPA) — Oregon 2022")
+plot(st_geometry(oregon), add = TRUE, border = "black", lwd = 1.5)
+plot(st_geometry(seedling_or), add = TRUE, pch = 16, col = "darkgreen", cex = 0.5)
+
+```
+```{r}
+# Count how many plots fall into each raster cell
+plot_count_raster <- rasterize(
+  seedling_or,           # your sf object
+  template_raster,       # same raster template
+  fun = "count"          # counts number of points per cell
+)
+df<-as.data.frame(plot_count_raster, xy = TRUE)
+summary(df$count)
+table(df$count)
 
 ```
 

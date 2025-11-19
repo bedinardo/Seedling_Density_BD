@@ -1,0 +1,108 @@
+---
+title: "DiNardo Annotated Bib"
+output:
+  html_document: default
+date: "2025-10-31"
+bibliography: references.bib
+csl: apa.csl
+---
+### McNellis et al. (2021) *Tree mortality in western U.S. forests forecasted using forest inventory and Random Forest classification.*
+**Citiation** [@mcnellis_tree_2021]
+
+**Summary** The authors used FIA TREE and PLOT data, climate (past and future), and soil data, to determine what were the main factors in the past that have caused tree mortality, and what can be expected to drive tree mortality in the future. Looking specifically at the rocky mountains and westward, using a random forest model to find the most influential predictors they found that tree species was the most predictive variable of tree mortality, both historically, and in the future. The most predictive climate variable for the past was maximum temperature. 
+
+**Evaluation** Using 2000 and beyond FIA data make their dataset stronger than user data before then since field methods for morality weren’t standardized until the 2000. A possible source of error that is stated is the plot coordinates from FIA, if on tribal or private land can be hidden and placed in a generalized random location could affect its comparison to finer resolution spatial data such as climate and soil data. Also the mortality agent in FIA data isn’t always super clear, both in how it's recorded and physical limitation, possibly introducing some generalization or error into that side of their analysis. 
+
+**Relevance** Will be used to guide variable choice, methods of manipulating FIA data, and random forest inputs. 
+
+### Bell & Lauenroth (2014) *Early indicators of change: Divergent climate envelopes between tree life stages imply range shifts in the western United States.*
+**Citiation** [@bell_early_2014]
+
+**Summary** The authors used FIA Tree and sapling data of six coniferous trees that are disrupted through the rocky mountains to model, under current climate conditions, the difference in probability of occurrence between mature trees and saplings. (Where there are mature trees there are also saplings, do they show up in similar proportions?)  They used a climate envelope model and 11 different climate conditions to determine probability of occurrences. They found shifts in the  patterns of tree regeneration, suggesting a  change in range,  responding to recent climate change. For some sp. The climate boundary for adults differed from seedling, indicating a shift in range and a loss of species from that forest type. 
+
+**Evaluation** One of the weaknesses of this study was it didn’t include temporal FIA data which would have shown, given on a short timeline, how species are currently turning over in that system. A strength the study was how the tested which climatic controls to use for their model
+
+**Relevance** This paper is good at seeing how seedling data can be collected and displayed. It also provides background for the justification of my research question, by showing that it expects trees to be moving. I can then ask if they have recently and if so is it just climate driving it, or are there other factors, or does climate have nothing to do with it. 
+
+### Laughlin et al (2023) *Patterns and drivers of early conifer regeneration following stand-replacing wildfire in Pacific Northwest (USA) temperate maritime forests*
+**Citiation** [@laughlin_patterns_2023]
+
+**Summary** The authors of this study were interested in post-fire conifer regeneration, and how regeneration is affected by pre-fire stand structure, burn patch size and climate condition. They were also interested in post fire seedling probability, diversity, and who is dominant in those burn locations. To answer their question they measure the size, density, and diversity of seedling in high severity burn areas 2-3 post fire. They developed GLMs to identify ecological drivers of post-fire conifer regeneration. The authors found smaller regeneration rate the further from a seed source, and seedling diversity and abundance increase with pre fire stand age, and that establishment rates were higher in colder, wetter conditions. 
+
+
+**Evaluation** This paper did a good job giving ecological and geographical background to their study region, and what tree sp could be expected at a stand depending on age and management. 
+
+**Relevance** This paper has some good background but most importantly it can help with interpretation of results in a meaningful way. Like if seedlings aren’t increasing in diversity over time (for whatever reason) then these stands aren’t going to be able to recover as quickly or be as diverse. Meaning low seedling diversity could mean low mature diversity therefore low fire resilience. 
+
+### Fick & Hijimans (2017) *WorldClim 2: New 1-km spatial resolution climate surfaces for global land areas.*
+**Citiation** [@fick_worldclim_2017]
+
+**Summary** The author created a new dataset of spatially interpolated monthly climate data for global land areas at a very high spatial resolution (1km). They use world wide weather data from every station collected from 1970 to 2000, and produce corrections using data from MODIS. Using interpolation using thin-plate splines with covariates including elevation, distance to the coast, max/min LST and cloud cover they were able to produce worldwide climate data look at monthly temperature (minimum, maximum and average), precipitation, solar radiation, vapour pressure and wind speed. This data is now available on climate and has been further processed to create bioclimate variables.
+
+**Evaluation** As with any spatial mapping, places where data is most often collected for the longest period of time will have the best resolution. By using MODIS data they could overcome some shortcomings of areas without a weather station, such as mountainous regions. However, their data is only until 2000 and will not reflect the new climatic norms that have arisen in the past 25 years. 
+
+**Relevance** This is the foundational paper about where the climate data that I will be using comes from and it is important to know what methods they used and their shortcomings, because any shortcoming of this data will be reflected in my own. 
+
+### Brown & Wu (2005) *Climate and Disturbance Forcing of Episodic Tree Recruitment in a Southwestern Ponderosa Pine Landscape.*
+**Citiation** [@brown_climate_2005]
+
+**Summary** The authors studied how tree recruitment timing varies depending on climate and fire, and how those two drives contribute to forest development and structure. They counted a bunch of tree rings and mapped old burn scares to determine historical fires, droughts, and wet years. In ponderosa pine they found greater tree recruitment during wet periods and less so during dry/drought, even if the canopy opened during periods of fire (saplings burned). Trees needed to be 10-40 years old before they could benefit from a forest fire in the cleared canopy space. They conclude that forest structure can change rapidly both in mortality, like fire, and recruitment when growing conditions are right. In the semi-modern they conclude that forests unchecked by fire-caused mortality, have resulted in more seedlings making it to a mature age leading to denser forests.
+
+**Evaluation** Old study about historic to modern forests using tree rings, lots of places for errors. I don’t think they really accounted for ingenious peoples managing the land or the coming of colonialism which resulted in fire suppression. They only looked at climatic factors, not management which bring some bias into their study.
+
+**Relevance** This is  a good paper for looking at what temporal changes in density could mean, what are the big climatic variables that others have found to drive recruitment, and what increasing or decreasing diversity could mean in certain forest types. 
+
+### Zhu et al. (2015) *Prevalence and strength of density-dependent tree recruitment.*
+**Citiation** [@zhu_prevalence_2015]
+
+**Summary** This study investigates how density-dependent (DD) effects shape tree recruitment, focusing on the relative strength of intraspecific vs. interspecific DD and how these effects vary with species abundance. Using FIA data across two sampling periods, the authors modeled seedling-to-sapling recruitment with a zero-inflated model, capturing both the occurrence and magnitude of recruitment events. They found that per capita recruitment generally declined with increasing neighboring density, though not uniformly across species. Notably, intraspecific DD effects were stronger in common species, suggesting that rare species may escape strong self-limitation, a pattern consistent with negative density dependence and potential rare-species advantage. Interspecific DD effects were present but generally weaker than intraspecific ones
+
+**Evaluation** Robust data set and control for climate variables. There is disagreement within the literature about how DD affects seedlings, sapling, and recruitment. This paper boils it down to a difference in methodology. 
+
+**Relevance** This paper looks at seedling density using FIA data, so its data gathering methods may be similar to mine. Additionally, they provide interaction on the population dynamic of seedling diversity and density, which I will be looking at and may be able to weigh in on.
+
+### Johnson et al. (2012) *Conspecific Negative Density Dependence and Forest Diversity.*
+**Citiation** [@johnson_conspecific_2012]
+
+**Summary** The authors studied a proposed mechanism for maintaining diversity. They looked at Conspecific negative density dependence using FIA data and compared seedling abundance to tree abundance (and basal area) using a generalized linear regressions. They found that CNDD had a significantly negative effect on seedling abundance, and this effect was greater for more abundant species, and was stronger for within species interaction than between species (heterospecific density). They also found that this interaction was a greater mechanism for diversity than latitudinal relation shapes (temp and perp). 
+
+**Evaluation** This study was straight forward, though not simple, but I’m not sure how I feel about it. Figure 3 has a correlation coefficient of 0.42 which I wouldn’t call significant like they did. Additionally, these findings go against the drivers of diversity that I was taught and this paper is from 2012, so I need to do more research to see if there's any more merit to this. Though Zhu et al. general findings do agree with this paper.
+
+**Relevance** Another paper that uses FIA seedling data but also focuses on explaining diversity with density and could be used to help interpret my own findings. 
+
+### Petrie et al. (2023) *Widespread regeneration failure in ponderosa pine forests of the southwestern United States.*
+**Citiation** [@petrie_widespread_2023]
+
+**Summary** The goal of this study was to determine how climatic and environmental conditions influence regeneration failure in ponderosa pine forests that have been light or undisturbed in the past 20 years. They used their own field data and measured regeneration density (seedlings), adult tree dbh and other environmental properties. They also used meteorological estimates and climate simulation as potential explanation variables for R0. They used random forest analyses for each group of explanatory variables to determine the top models and variables associated with R0 sites. They found that regeneration failure over the past 20 yrs is widespread (in SWUS). Climate had the largest effect on predicting regeneration failure, such as sustained high air and soil temps, and a loss of cool season climate. 
+
+**Evaluation** They used an ANOVA as their main statistical test, which after taking this class, I’m wary of as a test… They did take their own environmental data at the site which led to higher quality data then relying on methods such as DEM for elevations etc. 
+
+**Relevance** This paper can be used as evidence for thinking that some bioclimatic variables are possible drivers in temporal shift in sapling density. Regeneration failure will lead to a change to sapling density, and I can see if my drivers match the primary drivers from this paper.
+
+### Kirk et al. (2021) *Changes in beta diversity and species functional traits differ between saplings and mature trees in an old-growth forest.*
+**Citiation** [@kirk_changes_2021]
+
+**Summary** This study wanted to look at over a 25 year time span how forest diversity is related to tree size (sapling vs mature), has range of abundance of Carolinian sp. have  changed, if there has been a homogenization in either mature or sapling tree cohorts, and how the function traits of the trees have changed and what that informs us about the processes driving the changes. To study these they measured beta diversity in the forests of Southern Canada from permanent plots that were first measured in 1983. To study changes in community comp over time they used a PERMANOVA in conjunction with Hellinger dissimilarity matrices. They used an ANOVA to evaluate temporal change in beta diversity (also using dissimilarity). And a paired t-test for trait diversity. They found that only select species had any significant changes in abundance in both mature and sapling species. Also no change in mature tree beta disruption. However, there was a sig change in sapling composition, signaling a possible change in forest community structure. They found an increase in northern mature species. And a shift in spatial patterns of beta diversity. Their biggest take away was that seedlings were more sensitive to environment changes than mature, and their composition shifted toward that of a shade tolerant old growth forest, while mature trees did not. Showing the start of a shift. 
+
+**Evaluation** Once again they used ANOVA and T-test which I’m skeptical of as being the best test to use for these type of statistics. There is also possible bias in their study for how small of a study area they used. So their results are really localized. 
+
+**Relevance** Possible methodology for comparing sapling species over time and between communities. Also show that over time forest communities do have shifts in the sapling diversity, shifts that are dependent on climate and may reflect a shift in forest composition.
+
+### Qiu et al. (2021) *Niche Shifts From Trees to Fecundity to Recruitment That Determine Species Response to Climate Change.*
+**Citiation** [@qiu_niche_2021]
+
+**Summary** This paper studied how climate and habitat variables differ in their effects on seed production and seedling establishment and survival. They jointly modeled recruits and adults from all species, taking into account the mutual dependence structure, to do this they used a bunch of crazy equations I don’t understand. Their tree data came from FIA plots. They used the MASTIF model to accommodate dependencies between individuals and hierarchical clustering to look at how adult abundance, conditional recruitment, and fecundity. Then they use an alluvial diagram to summarize the tendency for all groups. They found that niche requirements for adult tree distribution can diverge from those for fecundity and seedling recruitment. 
+
+**Evaluation** This was a massive study, and used a ton of different data sources and models. I think they could have been a bit clearer in their methods about data acquisition and what each model did in order to increase replicability. 
+
+**Relevance** Another study shows that recruitment/ seedling/ sapling growth is dependent on climate and so it can be assumed that as climate change, so will the diversity of seedlings, leading to possible forest structure shifts over time. Also address gathering seedling data from FIA, so helpful in methods as well. 
+
+
+article{abatzoglou_development_2013,
+	title = {Development of gridded surface meteorological data for ecological applications and modelling},
+	volume = {33},
+	copyright = {Copyright © 2011 Royal Meteorological Society},
+	issn = {1097-0088},
+	url = {https://onlinelibrary.wiley.com/doi/abs/10.1002/joc.3413},
+	doi = {10.1002/joc.3413},
+citation [@abatzoglou_development_2013]

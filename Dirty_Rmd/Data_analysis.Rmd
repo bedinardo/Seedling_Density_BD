@@ -1,0 +1,42 @@
+---
+title: "Analysis"
+author: "Bryce DiNardo"
+date: "2025-11-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rFIA)
+library(dplyr)
+library(sf)
+library(terra)
+library(ggplot2)
+```
+
+Get our data 
+we have seedling_sf already need to load in 2022 climate data
+```{r}
+tmmn_2022<-rast("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Processed Climate Tiffs/Tmmn/tmmn_2022.tif")
+tmmx_2022<-rast("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Processed Climate Tiffs/Tmmx/tmmx_2022.tif")
+tmean_2022<-rast("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Processed Climate Tiffs/tmean/tmean_2022.tif")
+pr_2022<-rast("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Processed Climate Tiffs/Pr/pr_2022.tif")
+```
+
+Pull climate data from the pixel in which each FIA plot is located, building training data frame
+```{r}
+# Extract values from each raster
+seedling_climate <- seedling_sf %>%
+  mutate(
+    tmmn = terra::extract(tmmn_2022, seedling_sf)[,2],
+    tmmx = terra::extract(tmmx_2022, seedling_sf)[,2],
+    tmean = terra::extract(tmean_2022, seedling_sf)[,2],
+    pr = terra::extract(pr_2022, seedling_sf)[,2]
+  )
+#Drop geometry col, dont need it
+training_df <- seedling_climate %>%
+  st_drop_geometry() %>%
+  select(PLT_CN, TPA, tmmn, tmmx, tmean, pr)
+
+```
+
