@@ -12,6 +12,8 @@ library(dplyr)
 library(sf)
 library(terra)
 library(ggplot2)
+install.packages("ranger")
+library(ranger)
 ```
 
 Get our data 
@@ -37,6 +39,5 @@ seedling_climate <- seedling_sf %>%
 training_df <- seedling_climate %>%
   st_drop_geometry() %>%
   select(PLT_CN, TPA, tmmn, tmmx, tmean, pr)
-
 ```
-
+training_df is ready to run through the ranger function
