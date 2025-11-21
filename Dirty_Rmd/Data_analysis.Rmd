@@ -14,6 +14,7 @@ library(terra)
 library(ggplot2)
 install.packages("ranger")
 library(ranger)
+set.seed(123)
 ```
 
 Get our data 
@@ -37,7 +38,109 @@ seedling_climate <- seedling_sf %>%
   )
 #Drop geometry col, dont need it
 training_df <- seedling_climate %>%
-  st_drop_geometry() %>%
-  select(PLT_CN, TPA, tmmn, tmmx, tmean, pr)
+  st_drop_geometry()
+#need to make owner stuff into factors
+training_df$OWNCD <- as.factor(training_df$OWNCD)
+training_df$OWNGRPCD <- as.factor(training_df$OWNGRPCD)
+str(training_df)
 ```
 training_df is ready to run through the ranger function
+
+##Running RF
+Standard
+```{r}
+rf_model <- ranger(
+  formula = TPA ~ ELEV + OWNCD + OWNGRPCD + tmmn + tmmx + tmean + pr,
+  data = training_df,
+  num.trees = 1000,        # number of trees (default is 500)
+  mtry = 3,               # number of variables tried at each split
+  importance = "permutation",# or "permutation" for more robust importance
+  num.threads = 4,        # adjust to your CPU cores
+  seed = 123              # reproducibility
+)
+rf_model 
+rf_model$variable.importance
+
+sqrt(rf_model$prediction.error)
+
+```
+
+Let chanfe importance 
+```{r}
+
+barplot(rf_model$variable.importance,
+        main = "Permutation Importance",
+        las = 2, col = "forestgreen")
+#Still sucks but we will add more predictors
+```
+Elevation most impornat land owner least but is there an issue wth them being catigorical yet as numbers
+```{r}
+summary(training_df$TPA)
+hist(log1p(training_df$TPA))
+
+ggplot(training_df, aes(x = TPA)) +
+  geom_histogram(fill = "forestgreen", color = "white", bins = 30) +
+  scale_x_log10() +
+  labs(
+    title = "Histogram of Douglas-fir Seedling Density (Log Scale)",
+    x = "Trees per Acre (log10 scale)",
+    y = "Number of Plots"
+  ) +
+  theme_minimal()
+
+```
+```{r}
+max(training_df$TPA)
+```
+
+```{r}
+hist(training_df$TPA, breaks = 50, main = "Raw TPA Distribution")
+hist(log1p(training_df$TPA), breaks = 50, main = "Log-Transformed TPA Distribution")
+
+```
+```{r}
+#log transforming greatly improves the models fit
+rf_model_log <- ranger(
+  formula = log1p(TPA) ~ ELEV + OWNCD + OWNGRPCD + tmmn + tmmx + tmean + pr,
+  data = training_df,
+  num.trees = 1000,
+  mtry = 3,
+  importance = "permutation",
+  seed = 123
+)
+rf_model_log
+rf_model_log$variable.importance
+sqrt(rf_model_log$prediction.error)
+
+#need to compare the orginal model to log transform in the orginal models space
+preds_log_back <- exp(rf_model_log$predictions) - 1
+obs <- training_df$TPA
+
+# RMSE
+rmse_log_back <- sqrt(mean((obs - preds_log_back)^2))
+
+# R²
+r2_log_back <- 1 - sum((obs - preds_log_back)^2) / sum((obs - mean(obs))^2)
+
+c(RMSE_raw = sqrt(rf_raw$prediction.error),
+  R2_raw = rf_raw$r.squared,
+  RMSE_log_back = rmse_log_back,
+  R2_log_back = r2_log_back)
+```
+Graph side by side
+```{r}
+par(mfrow = c(1,2))
+
+plot(training_df$TPA, rf_raw$predictions,
+     xlab = "Observed TPA", ylab = "Predicted TPA",
+     main = "Raw Model", pch = 16, col = "forestgreen")
+abline(0,1,col="red",lty=2)
+
+plot(training_df$TPA, exp(rf_model_log$predictions)-1,
+     xlab = "Observed TPA", ylab = "Predicted TPA",
+     main = "Log Model (Back-transformed)", pch = 16, col = "steelblue")
+abline(0,1,col="red",lty=2)
+
+```
+
+chageg

@@ -23,12 +23,16 @@ or_fia_clip <- clipFIA(or_fia, mostRecent = TRUE)
 ```
 Filter SEEDLING table to get douglas-fir and inventory year 2022
 ```{r}
-head(or_fia_clip$SEEDLING)
+head(or_fia_clip$POP_STRATUM)
+
 Seedling_df<-or_fia_clip$SEEDLING %>% 
   filter(SPCD == 202, INVYR == 2022, !is.na(TREECOUNT_CALC), TREECOUNT_CALC > 0) %>% 
   select(PLT_CN, SUBP, CONDID, INVYR, SPCD, TREECOUNT_CALC, TPA_UNADJ)
 
 head(Seedling_df)
+
+Seedling_df %>% 
+  filter(PLT_CN == 823110394290487)
 
 ```
 To calculate TPA (trees per acre) for each plot, we first tidy the seedling data by filtering for Douglas-fir (SPCD == 202) in the 2022 inventory. Each row represents a subplot (SUBP) within a plot (PLT_CN), and includes an estimate of seedling density (TPA_UNADJ) for that subplot.
@@ -36,7 +40,7 @@ Since each plot typically contains four subplots (SUBP 1–4), we sum the TPA_UN
 ```{r}
 Seedling_tpa<-Seedling_df %>% 
   group_by(PLT_CN) %>% 
-  summarise(TPA = sum (TPA_UNADJ, na.rm = TRUE))
+  summarise(TPA = mean (TPA_UNADJ, na.rm = TRUE))
 ```
 We see a lot of 74.96528 and 149.93057, that is bacasue the expansiton factor is for every 1 seedling in mircoplot there is 74.96528 seedlings in the acre, so lots of plots of plot have just 1 or 2 seedlings
 
@@ -47,18 +51,39 @@ or_fia_clip$PLOT
 #Get PLT_CN, LAT, LON 
 plot_coords <- or_fia_clip$PLOT %>%
   filter(INVYR == 2022) %>% 
-  select(PLT_CN, LAT, LON) %>%
-  filter(!is.na(LAT), !is.na(LON))
+  select(PLT_CN, LAT, LON, ELEV) %>%
+  filter(!is.na(LAT), !is.na(LON), !is.na(ELEV))
 #Join the two tables
 seedling_df_latlong<-left_join(Seedling_tpa, plot_coords, by = "PLT_CN") %>% filter(!is.na(TPA), TPA > 0)
 
-max(seedling_df_latlong$TPA)
+
 ```
+Currently I now have lat, long, and elevation, need to add landowner from COND by plot_CN
+```{r}
+head(or_fia$COND)
+COND_grp<-or_fia$COND %>% 
+  filter(INVYR == 2022) %>% 
+  select(PLT_CN,OWNCD, OWNGRPCD)
+head(COND_grp)
+sum(is.na(COND_grp$OWNCD))
+sum(is.na(COND_grp$OWNGRPCD))
+```
+Very nice, let try to join
+```{r}
+seedling_df_ready<-left_join(seedling_df_latlong, COND_grp, by = "PLT_CN") 
+seedling_df_ready
+```
+
 Sweet now I have 2022 Douglas fir seedling TPA per a plot with lat long coordinatrs 
 Now I need to make the data table into a shape file, and make sure the datum is correct, their taken in  NAD 83 datum. The approximate latitude of the plot in decimal degrees using NAD 83 datum, but our climate data is in WG 84 so we use crs 4326 which is WGS 84
 ```{r}
 #Making our table a spacial feature
-seedling_sf <- st_as_sf(seedling_df_latlong, coords = c("LON", "LAT"), crs = 4326)
+seedling_sf <- st_as_sf(seedling_df_ready, coords = c("LON", "LAT"), crs = 4326)
+```
+##STOP eveything below is not need, are this point you are read to run analyisi
+Play with visulaization
+
+```{r}
 #Visualize
 plot(seedling_spatial["TPA"], main = "Douglas-fir Seedling Density by Plot")
 #Histogram of data

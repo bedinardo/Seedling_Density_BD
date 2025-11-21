@@ -1,0 +1,127 @@
+---
+title: "Get_Seedling"
+author: "Bryce DiNardo"
+date: "2025-11-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rFIA)
+library(dplyr)
+library(sf)
+library(terra)
+library(ggplot2)
+```
+
+## Getting and Processing FIA Seedling desnsity data  
+
+###Load FIA tables and clip to most recent inventory years
+
+```{r}
+or_fia <- readFIA("C:/Users/Bryce/OneDrive - University Of Oregon/FIA", nCores = 4)
+or_fia_clip <- clipFIA(or_fia, mostRecent = TRUE)
+```
+### Function to get seedling data from your specific invenotry year
+Inputs: year of intrest and the speceis code for speceis of intrest found on FIA appendix F
+Output: returns a data table with plot cn, sub plot number, condition id, inveotry year, species code, seedling count used in calulations, trees per arcer (TPA) unadjusted to plot.
+```{r}
+get_seedling<-function(year, spcd){
+  Seedling_df<-or_fia_clip$SEEDLING %>% 
+  filter(SPCD == spcd, INVYR == year, !is.na(TREECOUNT_CALC), TREECOUNT_CALC > 0) %>% 
+  select(PLT_CN, SUBP, CONDID, INVYR, SPCD, TREECOUNT_CALC, TPA_UNADJ)
+  return(Seedling_df)
+}
+```
+Calcuate trees per an acer per plt_cn. In puts
+```{r}
+seedling_TPA <- function(get_seedling_df){
+  get_seedling_df %>% 
+    group_by(PLT_CN) %>% 
+  summarise(TPA = mean (TPA_UNADJ, na.rm = TRUE))
+}
+```
+Plot level data
+```{r}
+get_lat_long<-function(year){
+  or_fia_clip$PLOT %>%
+  filter(INVYR == year) %>% 
+  select(PLT_CN, LAT, LON, ELEV) %>%
+  filter(!is.na(LAT), !is.na(LON), !is.na(ELEV))
+}
+```
+Get owner information
+```{r}
+get_owncd<-function(year){
+  or_fia$COND %>% 
+  filter(INVYR == year) %>% 
+  select(PLT_CN,OWNCD, OWNGRPCD)
+}
+```
+Time to join them all together
+```{r}
+join<-function(tpa_df, lat_long_df, owner_df){
+  tpa_df_latlong<-left_join(tpa_df, lat_long_df, by = "PLT_CN") %>% filter(!is.na(TPA), TPA > 0)
+  left_join(tpa_df_latlong, owner_df,by = "PLT_CN")
+}
+```
+Go for df to a spacital feature
+```{r}
+seeding_as_sf<-function(joined_df){
+  seedling_sf <- st_as_sf(joined_df, coords = c("LON", "LAT"), crs = 4326)
+  return(seedling_sf)
+}
+
+```
+##Combined all functions 
+```{r}
+process_seedlings <- function(year, spcd, save_path = NULL) {
+  
+  # 1. Get seedling records
+  Seedling_df <- or_fia_clip$SEEDLING %>%
+    filter(SPCD == spcd,
+           INVYR == year,
+           !is.na(TREECOUNT_CALC)) %>%
+    select(PLT_CN, SUBP, CONDID, INVYR, SPCD, TREECOUNT_CALC, TPA_UNADJ)
+  
+  # 2. Calculate plot-level TPA (sum of TPA_UNADJ across subplots)
+  # Note: FIA defines TPA_UNADJ as already count × expansion factor
+  Seedling_tpa <- Seedling_df %>%
+    group_by(PLT_CN) %>%
+    summarise(TPA = sum(TPA_UNADJ, na.rm = TRUE), .groups = "drop")
+  
+  # 3. Get plot coordinates and elevation
+  lat_long_df <- or_fia_clip$PLOT %>%
+    filter(INVYR == year) %>%
+    select(PLT_CN, LAT, LON, ELEV) %>%
+    filter(!is.na(LAT), !is.na(LON), !is.na(ELEV))
+  
+  # 4. Get ownership info
+  owner_df <- or_fia$COND %>%
+    filter(INVYR == year) %>%
+    select(PLT_CN, OWNCD, OWNGRPCD)
+  # 5. Join everything
+  joined_df <- Seedling_tpa %>%
+    left_join(lat_long_df, by = "PLT_CN") %>%
+    filter(!is.na(TPA), TPA > 0) %>%
+    left_join(owner_df, by = "PLT_CN")
+  
+  # 6. Convert to sf object
+  seedling_sf <- st_as_sf(joined_df, coords = c("LON", "LAT"), crs = 4326)
+  
+  # 7. Optionally save to file
+  if (!is.null(save_path)) {
+    st_write(seedling_sf, save_path, delete_dsn = TRUE)
+  }
+  
+  return(seedling_sf)
+}
+
+```
+Test
+```{r}
+process_seedlings(2021, 202)
+```
+
+
+
