@@ -12,7 +12,6 @@ library(dplyr)
 library(sf)
 library(terra)
 library(ggplot2)
-install.packages("ranger")
 library(ranger)
 set.seed(123)
 ```
