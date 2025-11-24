@@ -21,6 +21,7 @@ library(ggplot2)
 ```{r}
 or_fia <- readFIA("C:/Users/Bryce/OneDrive - University Of Oregon/FIA", nCores = 4)
 or_fia_clip <- clipFIA(or_fia, mostRecent = TRUE)
+rm(or_fia)
 ```
 ### Function to get seedling data from your specific invenotry year
 Inputs: year of intrest and the speceis code for speceis of intrest found on FIA appendix F
@@ -97,7 +98,7 @@ process_seedlings <- function(year, spcd, save_path = NULL) {
     filter(!is.na(LAT), !is.na(LON), !is.na(ELEV))
   
   # 4. Get ownership info
-  owner_df <- or_fia$COND %>%
+  owner_df <- or_fia_clip$COND %>%
     filter(INVYR == year) %>%
     select(PLT_CN, OWNCD, OWNGRPCD)
   # 5. Join everything
@@ -118,9 +119,46 @@ process_seedlings <- function(year, spcd, save_path = NULL) {
 }
 
 ```
-Test
+Test Function works, it goes
 ```{r}
-process_seedlings(2021, 202)
+process_seedlings(2022, 202)
+```
+Lets use a loop to run through all years 2014-2022 for douglas-fir (202)
+```{r}
+years<-2014:2022
+spcd<-202 #douglas-fir
+
+for(i in years){
+  file_saved<- file.path("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Seedling_TPA_sf/Douglas_Fir_TPA_sf", paste0("douglas-fir",i,".gpkg"))
+  process_seedlings(year = i, spcd = spcd, save_path = file_saved)
+}
+```
+Again but with Western Hemlock
+```{r}
+spcd<-263 #Western Hemlock
+#Loop with in file path
+for(i in years){
+  file_saved<- file.path("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Seedling_TPA_sf/Western_Hemlock_TPA_SF", paste0("Western_hemlock",i,".gpkg"))
+  process_seedlings(year = i, spcd = spcd, save_path = file_saved)
+}
+```
+
+
+
+
+
+
+Counting most surveyed seeds in my study time period to determine which speceis to go with 
+```{r}
+head(or_fia_clip$SEEDLING)
+most_abundant<-or_fia_clip$SEEDLING %>% 
+  filter(INVYR >= 2014) %>% 
+  select(PLT_CN, SPCD, TREECOUNT_CALC) %>% 
+  group_by(SPCD) %>% 
+  summarise(sum(TREECOUNT_CALC)) 
+  
+  most_abundant %>% 
+  arrange(desc( `sum(TREECOUNT_CALC)`))
 ```
 
 
