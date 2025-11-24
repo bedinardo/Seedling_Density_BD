@@ -129,7 +129,7 @@ years<-2014:2022
 spcd<-202 #douglas-fir
 
 for(i in years){
-  file_saved<- file.path("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Seedling_TPA_sf/Douglas_Fir_TPA_sf", paste0("douglas-fir",i,".gpkg"))
+  file_saved<- file.path("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Seedling_TPA_sf/Douglas_Fir", paste0("Douglas_Fir",i,".gpkg"))
   process_seedlings(year = i, spcd = spcd, save_path = file_saved)
 }
 ```
@@ -138,7 +138,7 @@ Again but with Western Hemlock
 spcd<-263 #Western Hemlock
 #Loop with in file path
 for(i in years){
-  file_saved<- file.path("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Seedling_TPA_sf/Western_Hemlock_TPA_SF", paste0("Western_hemlock",i,".gpkg"))
+  file_saved<- file.path("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Seedling_TPA_sf/Western_Hemlock", paste0("Western_Hemlock",i,".gpkg"))
   process_seedlings(year = i, spcd = spcd, save_path = file_saved)
 }
 ```
@@ -147,7 +147,7 @@ Third time with Lodge Pole Pine
 spcd<-108 #LodgePole pine
 #Loop with in file path
 for(i in years){
-  file_saved<- file.path("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Seedling_TPA_sf/Lodge_Pole_TPA_SF", paste0("Lodge_Pole",i,".gpkg"))
+  file_saved<- file.path("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Seedling_TPA_sf/Lodge_Pole", paste0("Lodge_Pole",i,".gpkg"))
   process_seedlings(year = i, spcd = spcd, save_path = file_saved)
 }
 ```

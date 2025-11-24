@@ -32,11 +32,56 @@ tmmx_rast_year<-rast(tmmx_year)
 tmean_rast_year<-rast(tmean_year)
 pr_rast_year<-rast(pr_year)
 
-climate_LyrStake_year<-(c(tmmn_rast_year, tmmx_rast_year, tmean_rast_year, pr_rast_year))
-return(climate_LyrStake_year)
+climate_LyrStack_year<-(c(tmmn_rast_year, tmmx_rast_year, tmean_rast_year, pr_rast_year))
+names(climate_LyrStack_year)<-c("tmmn","tmmx","tmean","pr")
+
+return(climate_LyrStack_year)
 }
 
 stack_2019<-get_clim_rasts(2019)
 nlyr(stack_2019)
+```
+Now that I have loaded in my wanted I want to take my saved SF with TPA and plot coors of the spcd and yr I want and extract climate variables from rasters 
+```{r}
+seedling_sf_2019<-st_read("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Seedling_TPA_sf/Douglas_Fir_TPA_SF/douglas-fir2019.gpkg")
+
+extracted_2019<-extract(stack_2019,seedling_sf_2019)
+
+combined_df<-seedling_sf_2019 %>% 
+  mutate(tmmn = extracted_2019$tmmn,
+        tmmx = extracted_2019$tmmx,
+        tmean = extracted_2019$tmean,
+        pr = extracted_2019$pr)
+
+combined_df <- cbind(seedling_sf_2019, extracted_2019[,-1])
+
+```
+Let write a function with it now
+```{r}
+Climate_extract <- function(year, species_name, spat_stack) {
+  # Build file path dynamically from year + species name
+  gpkg_file <- file.path(
+  "C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Seedling_TPA_sf",
+  species_name,
+  paste0(species_name, year, ".gpkg")
+)
+
+  
+  # Read the sf file
+  sf_file <- st_read(gpkg_file, quiet = TRUE)
+  
+  # Extract climate values from raster stack
+  extraction <- terra::extract(spat_stack, sf_file)
+  
+  # Bind climate values back to sf (drop ID column)
+  combined_df <- cbind(sf_file, extraction[,-1])
+  
+  # Convert ownership codes to factors
+  combined_df$OWNCD     <- as.factor(combined_df$OWNCD)
+  combined_df$OWNGRPCD  <- as.factor(combined_df$OWNGRPCD)
+  
+  return(combined_df)
+}
+Climate_extract(2019, "Douglas_Fir", stack_2019)
 ```
 
