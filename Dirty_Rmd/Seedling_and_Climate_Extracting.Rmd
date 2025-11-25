@@ -80,8 +80,72 @@ Climate_extract <- function(year, species_name, spat_stack) {
   combined_df$OWNCD     <- as.factor(combined_df$OWNCD)
   combined_df$OWNGRPCD  <- as.factor(combined_df$OWNGRPCD)
   
+   # Build output folder and file path
+  out_dir <- file.path(
+    "C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Extracted_Seedling_Climate",
+    species_name
+  )
+  out_file <- file.path(out_dir, paste0(species_name, "_", year, ".gpkg"))
+  
+  # Save to GeoPackage
+  st_write(combined_df, out_file, delete_dsn = TRUE, quiet = TRUE)
+  
   return(combined_df)
 }
+
+
 Climate_extract(2019, "Douglas_Fir", stack_2019)
+```
+Combine our two function so I can loop and have a munch if ready to go dataframes for analysis
+Takes year and the name of species in quotes and will return a spacial feature with points being plot locations that have TPA for that tree species taken that year, its land owner, elevation, and the tmmn, tmmx, tmean, pr calcauted at the year for that location
+```{r}
+SeedlingClimate_extract <- function(year, species_name){
+  # Build file path dynamically from year + species name
+  gpkg_file <- file.path(
+  "C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Seedling_TPA_sf",
+  species_name,
+  paste0(species_name, year, ".gpkg")
+)
+#Read in the seedling sf
+seedling_file <- st_read(gpkg_file, quiet = TRUE)
+
+#Read in rasts and build climate raster stack
+tmmn_file<-paste0("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Processed Climate Tiffs/Tmmn/tmmn_", year, ".tif")
+tmmx_file<-paste0("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Processed Climate Tiffs/Tmmx/tmmx_", year, ".tif")
+tmean_file<-paste0("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Processed Climate Tiffs/tmean/tmean_", year, ".tif")
+pr_file<-paste0("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Processed Climate Tiffs/Pr/pr_", year, ".tif")
+
+#Read the rasts
+tmmn_rast<-rast(tmmn_file)
+tmmx_rast<-rast(tmmx_file)
+tmean_rast<-rast(tmean_file)
+pr_rast<-rast(pr_file)
+
+climate_stack<-(c(tmmn_rast, tmmx_rast, tmean_rast, pr_rast))
+names(climate_stack)<-c("tmmn","tmmx","tmean","pr")
+
+#Extract climate values 
+ clim_vals <- terra::extract(climate_stack, seedling_file)
+ 
+#Bind climate values back to sf (drop ID column)
+  combined_sf <- cbind(seedling_file, clim_vals[,-1])
+#Ownership codes to factors
+  combined_sf$OWNCD    <- as.factor(combined_sf$OWNCD)
+  combined_sf$OWNGRPCD <- as.factor(combined_sf$OWNGRPCD)
+  
+#Save outout
+out_dir<-file.path("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Extracted_Seedling_Climate",
+    species_name
+  )
+  out_file <- file.path(out_dir, paste0(species_name, "_", year, ".gpkg"))
+  
+st_write(combined_df, out_file, delete_dsn = TRUE, quiet = TRUE)
+
+ return(combined_sf)
+}
+```
+Test
+```{r}
+SeedlingClimate_extract(2020, "Douglas_Fir")
 ```
 
