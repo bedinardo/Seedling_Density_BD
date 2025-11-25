@@ -139,7 +139,7 @@ out_dir<-file.path("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seed
   )
   out_file <- file.path(out_dir, paste0(species_name, "_", year, ".gpkg"))
   
-st_write(combined_df, out_file, delete_dsn = TRUE, quiet = TRUE)
+st_write(combined_sf, out_file, delete_dsn = TRUE, quiet = TRUE)
 
  return(combined_sf)
 }
@@ -147,5 +147,26 @@ st_write(combined_df, out_file, delete_dsn = TRUE, quiet = TRUE)
 Test
 ```{r}
 SeedlingClimate_extract(2020, "Douglas_Fir")
+```
+It works, now lets loop through 2014- 2022 for Douglas_Fir
+```{r}
+year<-2014:2022
+
+for(i in year){
+  SeedlingClimate_extract(i, "Douglas_Fir")
+}
+```
+Western_Hemlock
+```{r}
+year<-2014:2022
+for(i in year){
+  SeedlingClimate_extract(i, "Western_Hemlock")
+}
+```
+Lodge_Pole
+```{r}
+for(i in year){
+  SeedlingClimate_extract(i, "Lodge_Pole")
+}
 ```
 
