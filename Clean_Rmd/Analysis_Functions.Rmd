@@ -1,0 +1,89 @@
+---
+title: "Analysis_Functions"
+author: "Bryce DiNardo"
+date: "2025-11-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rFIA)
+library(dplyr)
+library(sf)
+library(terra)
+library(ggplot2)
+library(ranger)
+set.seed(123)
+```
+
+## Data Analysis function and Running of functions
+
+I have saved .gpkg files for all year and species combation that contain the climate variable values for each plot location. In order to run these function into ranger (the random forest function I'm using) I need to convert these files to a data frame and make sure catigorical data (landowner) varaibles are recorded as factors. This function only need the year and species of intrest
+
+```{r}
+get_training_data<-function(year, species_name){
+  #Load in the extracted file previously created
+   gpkg_file <- file.path(
+  "C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Extracted_Seedling_Climate",
+  species_name,
+  paste0(species_name, "_", year, ".gpkg")
+)
+   #remove geometry to make it a data frame
+  extracted_file <- st_read(gpkg_file, quiet = TRUE)
+  extracted_file<-st_drop_geometry(extracted_file)
+  #set owncd and owngrpcd to factor
+  extracted_file$OWNCD<-as.factor(extracted_file$OWNCD)
+  extracted_file$OWNGRPCD<-as.factor(  extracted_file$OWNGRPCD)
+  
+#return the ranger ready data.frame 
+  return(extracted_file)
+}
+```
+Now that we have a function that can clean our data in its necessary way I can feed it into a new function that will get and clean our wanted file and then run it through the random forest function and save the results to disk. This function need year and species name, and output directory but I set that equal to my own.I use a base log10 to help normalize my TPA distributions since it its very common for most FIA plots to only have a handful of seedling, with less and less plots having more and more seedlings, until there is only one plot with a TPA of over 7,000 while the vast majority of plots have a TPA of ~75-150. Im not sure why I use permutation, will need to look into
+
+```{r}
+fit_and_save_ranger <- function(year, species_name, output_dir = "C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Ranger_Outputs") {
+  # Load training data
+  df <- get_training_data(year, species_name)
+  
+  # Fit ranger model
+  rf_model <- ranger(
+    formula = log10(TPA) ~ ELEV + OWNCD + OWNGRPCD + tmmn + tmmx + tmean + pr,
+    data = df,
+    num.trees = 1000,
+    mtry = 3,
+    importance = "permutation",
+    seed = 123
+  )
+  
+  # Create output path
+  output_file <- file.path(output_dir, paste0("rf_model_", species_name, "_", year, ".rds"))
+  
+  # Save model object
+  saveRDS(rf_model, output_file)
+}
+```
+Now I run my new function through some loops for each spceis and year combination and I save the results to my computer
+
+Douglas Fir
+```{r}
+year<-2014:2022
+
+for(i in year){
+  fit_and_save_ranger(i, "Douglas_Fir")
+}
+```
+Western Hemlock
+```{r}
+for(i in year){
+  fit_and_save_ranger(i, "Western_Hemlock")
+}
+```
+Lastly Lodge Pole
+```{r}
+for(i in year){
+  fit_and_save_ranger(i, "Lodge_Pole")
+}
+```
+
+

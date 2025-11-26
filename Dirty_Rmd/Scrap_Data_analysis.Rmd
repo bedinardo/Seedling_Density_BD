@@ -1,0 +1,250 @@
+---
+title: "Analysis"
+author: "Bryce DiNardo"
+date: "2025-11-19"
+output: html_document
+---
+###Used analysis function and loops found at bottom
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rFIA)
+library(dplyr)
+library(sf)
+library(terra)
+library(ggplot2)
+library(ranger)
+set.seed(123)
+```
+
+Get our data 
+we have seedling_sf already need to load in 2022 climate data
+```{r}
+tmmn_2022<-rast("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Processed Climate Tiffs/Tmmn/tmmn_2022.tif")
+tmmx_2022<-rast("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Processed Climate Tiffs/Tmmx/tmmx_2022.tif")
+tmean_2022<-rast("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Processed Climate Tiffs/tmean/tmean_2022.tif")
+pr_2022<-rast("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Processed Climate Tiffs/Pr/pr_2022.tif")
+```
+
+Pull climate data from the pixel in which each FIA plot is located, building training data frame
+```{r}
+# Extract values from each raster
+seedling_climate <- seedling_sf %>%
+  mutate(
+    tmmn = terra::extract(tmmn_2022, seedling_sf)[,2],
+    tmmx = terra::extract(tmmx_2022, seedling_sf)[,2],
+    tmean = terra::extract(tmean_2022, seedling_sf)[,2],
+    pr = terra::extract(pr_2022, seedling_sf)[,2]
+  )
+#Drop geometry col, dont need it
+training_df <- seedling_climate %>%
+  st_drop_geometry()
+#need to make owner stuff into factors
+training_df$OWNCD <- as.factor(training_df$OWNCD)
+training_df$OWNGRPCD <- as.factor(training_df$OWNGRPCD)
+str(training_df)
+```
+training_df is ready to run through the ranger function
+
+##Running RF
+Standard
+```{r}
+rf_model <- ranger(
+  formula = TPA ~ ELEV + OWNCD + OWNGRPCD + tmmn + tmmx + tmean + pr,
+  data = training_df,
+  num.trees = 1000,        # number of trees (default is 500)
+  mtry = 3,               # number of variables tried at each split
+  importance = "permutation",# or "permutation" for more robust importance
+  num.threads = 4,        # adjust to your CPU cores
+  seed = 123              # reproducibility
+)
+rf_model 
+rf_model$variable.importance
+
+sqrt(rf_model$prediction.error)
+
+```
+
+Let chanfe importance 
+```{r}
+
+barplot(rf_model$variable.importance,
+        main = "Permutation Importance",
+        las = 2, col = "forestgreen")
+#Still sucks but we will add more predictors
+```
+Elevation most impornat land owner least but is there an issue wth them being catigorical yet as numbers
+```{r}
+summary(training_df$TPA)
+hist(log1p(training_df$TPA))
+
+ggplot(training_df, aes(x = TPA)) +
+  geom_histogram(fill = "forestgreen", color = "white", bins = 30) +
+  scale_x_log10() +
+  labs(
+    title = "Histogram of Douglas-fir Seedling Density (Log Scale)",
+    x = "Trees per Acre (log10 scale)",
+    y = "Number of Plots"
+  ) +
+  theme_minimal()
+
+```
+```{r}
+max(training_df$TPA)
+```
+
+```{r}
+hist(training_df$TPA, breaks = 50, main = "Raw TPA Distribution")
+hist(log1p(training_df$TPA), breaks = 50, main = "Log-Transformed TPA Distribution")
+
+```
+```{r}
+#log transforming greatly improves the models fit
+rf_model_log <- ranger(
+  formula = log1p(TPA) ~ ELEV + OWNCD + OWNGRPCD + tmmn + tmmx + tmean + pr,
+  data = training_df,
+  num.trees = 1000,
+  mtry = 3,
+  importance = "permutation",
+  seed = 123
+)
+rf_model_log
+rf_model_log$variable.importance
+sqrt(rf_model_log$prediction.error)
+
+#need to compare the orginal model to log transform in the orginal models space
+preds_log_back <- exp(rf_model_log$predictions) - 1
+obs <- training_df$TPA
+
+# RMSE
+rmse_log_back <- sqrt(mean((obs - preds_log_back)^2))
+
+# R²
+r2_log_back <- 1 - sum((obs - preds_log_back)^2) / sum((obs - mean(obs))^2)
+
+c(RMSE_raw = sqrt(rf_raw$prediction.error),
+  R2_raw = rf_raw$r.squared,
+  RMSE_log_back = rmse_log_back,
+  R2_log_back = r2_log_back)
+```
+Graph side by side
+```{r}
+par(mfrow = c(1,2))
+
+plot(training_df$TPA, rf_raw$predictions,
+     xlab = "Observed TPA", ylab = "Predicted TPA",
+     main = "Raw Model", pch = 16, col = "forestgreen")
+abline(0,1,col="red",lty=2)
+
+plot(training_df$TPA, exp(rf_model_log$predictions)-1,
+     xlab = "Observed TPA", ylab = "Predicted TPA",
+     main = "Log Model (Back-transformed)", pch = 16, col = "steelblue")
+abline(0,1,col="red",lty=2)
+
+```
+
+```{r}
+seedling_sf_2019<- st_read("C:/Users/dinardo/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Extracted_Seedling_Climate/Douglas_Fir/Douglas_Fir_2019.gpkg")
+colnames(seedling_sf_2019)
+str(seedling_sf_2019)
+seedling_sf_2019$OWNCD<-as.factor(seedling_sf_2019$OWNCD)
+st_drop_geometry(seedling_sf_2019)
+
+```
+
+
+###FUNCTION
+
+
+
+Function to get extracted .gdpk ready to be fed into ranger
+```{r}
+get_training_data<-function(year, species_name){
+  #Load in the extracted file previously created
+   gpkg_file <- file.path(
+  "C:/Users/dinardo/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Extracted_Seedling_Climate",
+  species_name,
+  paste0(species_name, "_", year, ".gpkg")
+)
+   #remove geometry to make it a data frame
+  extracted_file <- st_read(gpkg_file, quiet = TRUE)
+  extracted_file<-st_drop_geometry(extracted_file)
+  #set owncd and owngrpcd to factor
+  extracted_file$OWNCD<-as.factor(extracted_file$OWNCD)
+  extracted_file$OWNGRPCD<-as.factor(  extracted_file$OWNGRPCD)
+  
+#return the ranger ready data.frame 
+  return(extracted_file)
+}
+```
+Test and look at data and try different log transforms for best fit
+```{r}
+df_2019<-get_training_data(2019, "Western_Hemlock")
+hist(log10(df_2019$TPA))
+hist(df_2019$TPA)
+```
+playng with running a random forest
+```{r}
+rf_model_log <- ranger(
+  formula = log10(TPA) ~ ELEV + OWNCD + OWNGRPCD + tmmn + tmmx + tmean + pr,
+  data = df_2019,
+  num.trees = 1000,
+  mtry = 3,
+  importance = "permutation",
+  seed = 123
+)
+rf_model_log
+rf_model_log$variable.importance
+```
+###FUNCTION for running and saving ranger outputs for multple years/speceis combo
+```{r}
+
+fit_and_save_ranger <- function(year, species_name, output_dir = "C:/Users/dinardo/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Ranger_Outputs") {
+  # Load training data
+  df <- get_training_data(year, species_name)
+  
+  # Fit ranger model
+  rf_model <- ranger(
+    formula = log10(TPA) ~ ELEV + OWNCD + OWNGRPCD + tmmn + tmmx + tmean + pr,
+    data = df,
+    num.trees = 1000,
+    mtry = 3,
+    importance = "permutation",
+    seed = 123
+  )
+  
+  # Create output path
+  output_file <- file.path(output_dir, paste0("rf_model_", species_name, "_", year, ".rds"))
+  
+  # Save model object
+  saveRDS(rf_model, output_file)
+}
+```
+Test
+```{r}
+fit_and_save_ranger(2019, "Douglas_Fir")
+```
+```{r}
+rf_2019<-readRDS("C:/Users/dinardo/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Ranger_Outputs/rf_model_Douglas_Fir_2019.rds")
+rf_2019$variable.importance
+```
+Loop through all years for douglis fir
+```{r}
+year<-2014:2022
+
+for(i in year){
+  fit_and_save_ranger(i, "Douglas_Fir")
+}
+```
+Western Hemlock
+```{r}
+for(i in year){
+  fit_and_save_ranger(i, "Western_Hemlock")
+}
+```
+Lastly Lodge Pole
+```{r}
+for(i in year){
+  fit_and_save_ranger(i, "Lodge_Pole")
+}
+```
+
