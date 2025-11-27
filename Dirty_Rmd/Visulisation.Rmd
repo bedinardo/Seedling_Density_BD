@@ -67,4 +67,72 @@ print(models_summary, n = Inf)
 
 
 ```
+Lets plot the occurrence of each top predictor with each species
+```{r}
+top_counts <- models_summary %>%
+  count(species, top_predictor)
+top_counts <- top_counts %>%
+  group_by(top_predictor) %>%
+  mutate(total_n = sum(n)) %>%
+  ungroup() %>%
+  arrange(desc(total_n))
+
+
+```
+graph it
+```{r}
+ggplot(top_counts, aes(x = reorder(top_predictor, -total_n), y = n, fill = species)) +
+  geom_col(position = "stack")
+
+```
+Look at the whole table: I see that there are a bunch of predictors that are close ... how to show all this data
+```{r}
+library(tidyr)
+varimp_long <- models_summary %>% unnest(varimp)
+head(varimp_long)
+
+```
+Options
+Just for species year, I thik this looks nice and is a good overview for a single year species combo
+```{r}
+ggplot(varimp_long %>% filter(species == "Douglas_Fir", year == 2014),
+       aes(x = importance, y = reorder(predictor, importance), fill = predictor)) +
+  geom_col() +
+  labs(title = "Douglas Fir 2014 — Variable Importance",
+       x = "Permutation importance", y = NULL) +
+  theme_minimal()
+
+```
+This one is good too, based on species, including all years, which predictors are consistinly imporantant year to year
+```{r}
+ggplot(varimp_long %>% filter(species == "Douglas_Fir"),
+       aes(x = predictor, y = importance, fill = predictor)) +
+  geom_boxplot() +
+  labs(title = "Douglas Fir — Importance distribution across years",
+       y = "Permutation importance") +
+  theme_minimal()
+
+```
+Looks how vairale imporantace changes year to year
+```{r}
+ggplot(varimp_long %>% filter(species == "Douglas_Fir"),
+       aes(x = year, y = importance, color = predictor)) +
+  geom_line(size = 1) +
+  geom_point() +
+  labs(title = "Douglas Fir — Importance over time",
+       y = "Permutation importance") +
+  theme_minimal()
+
+```
+Line graph but as a heat map
+```{r}
+ggplot(varimp_long %>% filter(species == "Douglas_Fir"),
+       aes(x = factor(year), y = predictor, fill = importance)) +
+  geom_tile(color = "white") +
+  scale_fill_viridis_c(option = "C") +
+  labs(title = "Douglas Fir — Predictor importance heat map",
+       x = "Year", y = "Predictor", fill = "Importance") +
+  theme_minimal()
+
+```
 
