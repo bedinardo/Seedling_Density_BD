@@ -1,0 +1,70 @@
+---
+title: "Data_Visulization"
+author: "Bryce DiNardo"
+date: "2025-11-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rFIA)
+library(dplyr)
+library(sf)
+library(terra)
+library(ggplot2)
+library(ranger)
+library(purrr)
+set.seed(123)
+```
+
+##Start making sense of these random forests
+Have to build a function that will allow me to grab all my save .rds ranger outputs and then start interpenetrating them.
+
+This first function will help summarize what the main driver of predicting TPA are in each year species combo
+```{r}
+#Takes species name, year, and directory, present to where I have .rds files saved
+summarize_model <- function(species_name, year,
+                            model_dir = "C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Ranger_Outputs") {
+  #go get file and load it
+  model_file <- file.path(model_dir, paste0("rf_model_", species_name, "_", year, ".rds"))
+  m<-readRDS(model_file)
+
+#Now need to read the outputs from the model
+#OOB
+  r2 <- m$r.squared
+  rmse <- sqrt(m$prediction.error)
+# Variable importance
+  vi <- tibble(
+    predictor = names(m$variable.importance),
+    importance = as.numeric(m$variable.importance)
+  )
+# Top predictor
+  top_pred <- vi %>% slice_max(order_by = importance, n = 1, with_ties = FALSE)
+  
+  # Return tidy summary row with nested importance
+  tibble(
+    species = species_name,
+    year = year,
+    r2 = r2,
+    rmse = rmse,
+    top_predictor = top_pred$predictor,
+    top_importance = top_pred$importance,
+    varimp = list(vi)   # nested tibble for easy unnesting later
+  )
+}
+
+#Do with all utilizig the purrr package and map_df() function 
+# Apply across all species-years
+species <- c("Douglas_Fir","Western_Hemlock","Lodge_Pole")
+years <- 2014:2022
+
+models_summary <- map_df(species, function(sp) {
+  map_df(years, function(yr) summarize_model(sp, yr))
+})
+
+# Quick look
+print(models_summary, n = Inf)
+
+
+```
+

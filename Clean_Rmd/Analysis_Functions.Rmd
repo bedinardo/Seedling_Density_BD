@@ -18,7 +18,7 @@ set.seed(123)
 
 ## Data Analysis function and Running of functions
 
-I have saved .gpkg files for all year and species combation that contain the climate variable values for each plot location. In order to run these function into ranger (the random forest function I'm using) I need to convert these files to a data frame and make sure catigorical data (landowner) varaibles are recorded as factors. This function only need the year and species of intrest
+I have saved .gpkg files for all year and species combination that contain the climate variable values for each plot location. In order to run these function into ranger (the random forest function I'm using) I need to convert these files to a data frame and make sure categorical data (landowner) variables are recorded as factors. This function only need the year and species of interest
 
 ```{r}
 get_training_data<-function(year, species_name){
