@@ -58,6 +58,7 @@ st_write(all_sf,
          "C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Geom_point_w_sp_yr/all_species_years.gpkg",
          delete_dsn = TRUE)
 
+crs(all_sf)
 ```
 Join my two big tables together by species and year
 ```{r}
@@ -71,5 +72,44 @@ st_write(map_data,
          "C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Geom_point_w_sp_yr/model_w_geom.gpkg",
          delete_dsn = TRUE)
 colnames(map_data)
+```
+Lets make a map where color represents year and symbol species with a base layer of oregon, making sure crs match
+```{r}
+library(tigris)
+states_sf <- tigris::states(year = 2024)
+oregon_sf <- states_sf %>%
+  filter(STUSPS == "OR")
+oregon_sf <- st_transform(oregon_sf, st_crs(all_sf))
+crs(oregon_sf)
+```
+Map it
+```{r}
+ggplot() +
+  geom_sf(data = oregon_sf, fill = "gray95", color = "black") +
+  geom_sf(data = all_sf,
+          aes(color = factor(year), shape = species),
+          size = 2, alpha = 0.7) +
+  scale_color_viridis_d(option = "C") +
+  labs(title = "Seedling Recruitment Plots in Oregon",
+       color = "Year", shape = "Species") +
+  theme_minimal(base_size = 12)
+```
+Map by species, with color showing year and symbol top_predictor
+```{r}
+#Get just douglis fir
+Doug_fir<-map_data %>% 
+  filter(species == "Douglas_Fir")
+#Plot
+ggplot() +
+  geom_sf(data = oregon_sf, fill = "gray95", color = "black") +
+  geom_sf(data = Doug_fir,
+          aes(color = factor(year), shape = top_predictor),
+          size = 2, alpha = 0.8) +
+  scale_color_viridis_d(option = "C") +
+  labs(title = "Douglas-Fir Recruitment Plots in Oregon",
+       color = "Year",
+       shape = "Top Predictor") +
+  theme_minimal(base_size = 12)
+
 ```
 
