@@ -268,4 +268,11 @@ mean_rmse<-models_summary %>%
 #Join them
 summarized_model_preformance<- r2_summarised %>% left_join(mean_rmse, by = "species")
 ```
+Map maps maps!
+map with symbols for species and color for top driver
+I need a oregon shape file ( crs wgs 84)
+I need to make a big table with all model summary joined with 
+```{r}
+st_test<-st_read("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Extracted_Seedling_Climate/Douglas_Fir/Douglas_Fir_2019.gpkg")
+```
 

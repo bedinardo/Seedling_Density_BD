@@ -1,0 +1,75 @@
+---
+title: "Maps"
+author: "Bryce DiNardo"
+date: "2025-11-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rFIA)
+library(dplyr)
+library(sf)
+library(terra)
+library(ggplot2)
+library(ranger)
+library(purrr)
+set.seed(123)
+```
+
+## Reorganzing and arranging data and making maps
+
+So in my orginal shp files I made, the file name holds what species and year the data is from, but that isn't found in the data frame itself, so if I want to make a map that can show both plot location, species name, year inventoryed, and its top predictor I need to get a tibble that has name and year with geom points
+```{r}
+#Have to do this muliple times so best bet is a function
+add_sp_yr <- function(species, year) {
+  # Build file path to the gpkg
+  dir <- file.path(
+    "C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Seedling_TPA_sf",
+    species,
+    paste0(species, year, ".gpkg")
+  )
+  
+  # Read in the sf object
+  sf <- st_read(dir, quiet = TRUE)
+  
+  # Add species and year columns
+  sf <- sf %>%
+    mutate(species = species,
+           year = year)
+  
+  return(sf)
+}
+
+```
+Now I need to loop through all species and years and then smash them into a big tibble and save that tibble
+```{r}
+species_list <- c("Douglas_Fir", "Western_Hemlock", "Lodge_Pole")
+years <- 2014:2022
+
+# Build all combinations
+sp_years <- expand.grid(species = species_list, year = years)
+
+# Read and combine
+all_sf <- map2_dfr(sp_years$species, sp_years$year, add_sp_yr)
+
+#save my table
+st_write(all_sf,
+         "C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Geom_point_w_sp_yr/all_species_years.gpkg",
+         delete_dsn = TRUE)
+
+```
+Join my two big tables together by species and year
+```{r}
+map_data <- all_sf %>%
+  left_join(models_summary, by = c("species", "year"))
+```
+
+Save it
+```{r}
+st_write(map_data,
+         "C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Geom_point_w_sp_yr/model_w_geom.gpkg",
+         delete_dsn = TRUE)
+colnames(map_data)
+```
+
