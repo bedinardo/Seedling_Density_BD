@@ -19,6 +19,9 @@ set.seed(123)
 
 ##Start making sense of these random forests
 Have to build a function that will allow me to grab all my save .rds ranger outputs and then start interpenetrating them.
+```{r}
+readRDS("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Ranger_Outputs/rf_model_Douglas_Fir_2016.rds")
+```
 
 This first function will help summarize what the main driver of predicting TPA are in each year species combo
 ```{r}
@@ -122,7 +125,22 @@ ggplot(varimp_long %>% filter(species == "Douglas_Fir"),
   labs(title = "Douglas Fir — Importance over time",
        y = "Permutation importance") +
   theme_minimal()
-
+#hemlock
+ggplot(varimp_long %>% filter(species == "Western_Hemlock"),
+       aes(x = year, y = importance, color = predictor)) +
+  geom_line(size = 1) +
+  geom_point() +
+  labs(title = "Western Hemlock — Importance over time",
+       y = "Permutation importance") +
+  theme_minimal()
+#lodge pole pine
+ggplot(varimp_long %>% filter(species == "Lodge_Pole"),
+       aes(x = year, y = importance, color = predictor)) +
+  geom_line(size = 1) +
+  geom_point() +
+  labs(title = "Lodge Pole Pine — Importance over time",
+       y = "Permutation importance") +
+  theme_minimal()
 ```
 Line graph but as a heat map
 ```{r}
@@ -134,5 +152,120 @@ ggplot(varimp_long %>% filter(species == "Douglas_Fir"),
        x = "Year", y = "Predictor", fill = "Importance") +
   theme_minimal()
 
+```
+Let run these last 3 visulations for hemlock
+```{r}
+ggplot(varimp_long %>% filter(species == "Western_Hemlock"),
+       aes(x = predictor, y = importance, fill = predictor)) +
+  geom_boxplot() +
+  labs(title = "Western Hemlock — Importance distribution across years",
+       y = "Permutation importance") +
+  theme_minimal()
+```
+```{r}
+ggplot(varimp_long,
+       aes(x = predictor, y = importance, fill = predictor)) +
+  geom_boxplot() +
+  facet_wrap(~ species, ncol = 1, scales = "free_y") +
+  labs(
+    title = "Variable Importance Distributions Across Species",
+    y = "Permutation importance",
+    x = "Predictor"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "none")
+
+```
+I think permuation important with the current values is a bit hard to understand, so lets turn it into a percentage. However the percentage is relative to the model as a whole. These are not the only varaibles that detemine TPA
+```{r}
+varimp_pct <- varimp_long %>%
+  group_by(species, year) %>%
+  mutate(
+    importance_pct = importance / sum(importance) * 100
+  ) %>%
+  ungroup()
+
+```
+Graph the percent
+```{r}
+ggplot(varimp_pct %>% filter(species == "Douglas_Fir"),
+       aes(x = predictor, y = importance_pct, fill = predictor)) +
+  geom_boxplot() +
+  labs(
+    title = "Douglas Fir — Relative Predictor Importance Across Years",
+    y = "Importance (%) of total",
+    x = "Predictor"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "none")
+
+```
+
+```{r}
+top_counts_pct <- varimp_pct %>%
+  group_by(species, predictor) %>%
+  summarise(mean_pct = mean(importance_pct), .groups = "drop")
+
+ggplot(top_counts_pct,
+       aes(x = predictor, y = mean_pct, fill = species)) +
+  geom_col(position = "stack") +
+  labs(
+    title = "Average Relative Importance of Predictors Across Species",
+    y = "Mean importance (%)",
+    x = "Predictor"
+  ) +
+  theme_minimal(base_size = 12)
+
+```
+Multi species heat map
+```{r}
+ggplot(varimp_pct,
+       aes(x = factor(year), y = predictor, fill = importance_pct)) +
+  geom_tile(color = "white") +
+  scale_fill_viridis_c(option = "C") +
+  facet_wrap(~ species, ncol = 1) +
+  labs(
+    title = "Relative Predictor Importance Across Species and Years",
+    x = "Year",
+    y = "Predictor",
+    fill = "Importance (%)"
+  ) +
+  theme_minimal(base_size = 12)
+
+```
+
+```{r}
+ggplot(models_summary,
+       aes(x = r2, y = top_importance, color = top_predictor)) +
+  geom_point() +
+  labs(title = "Model Fit vs. Top Predictor Importance",
+       x = "OOB R²", y = "Top predictor importance")
+
+
+```
+
+```{r}
+ggplot(varimp_pct,
+       aes(x = predictor, y = importance_pct, fill = predictor)) +
+  geom_boxplot() +
+  facet_wrap(~ species, ncol = 1, scales = "free_y") +
+  labs(title = "Relative Predictor Importance Across Species")
+
+```
+I'm going to make a table that shows max min mean r2 for each species, and then mean rmse, but back transformed to have it in terms of actual TPA
+```{r}
+models_summary
+#First get min max mean r2
+r2_summarised<-models_summary %>% 
+  group_by(species) %>% 
+  summarise(min_r2 = min(r2), max_r2 = max(r2), mean_r2 = mean(r2))
+  
+#Then calc mean rmse and back transform rmse
+mean_rmse<-models_summary %>% 
+  group_by(species) %>% 
+  summarise (mean_rmse_TPA = 10^mean(rmse))
+
+#Join them
+summarized_model_preformance<- r2_summarised %>% left_join(mean_rmse, by = "species")
 ```
 
