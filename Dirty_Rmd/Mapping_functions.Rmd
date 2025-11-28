@@ -112,4 +112,36 @@ ggplot() +
   theme_minimal(base_size = 12)
 
 ```
+Map for hemlock
+```{r}
+Doug_fir<-map_data %>% 
+  filter(species == "Western_Hemlock")
+#Plot
+ggplot() +
+  geom_sf(data = oregon_sf, fill = "gray95", color = "black") +
+  geom_sf(data = Doug_fir,
+          aes(color = factor(year), shape = top_predictor),
+          size = 2, alpha = 0.8) +
+  scale_color_viridis_d(option = "C") +
+  labs(title = "Western Hemlock Recruitment Plots in Oregon",
+       color = "Year",
+       shape = "Top Predictor") +
+  theme_minimal(base_size = 12)
+```
+Lodge Pole
+```{r}
+lodge_pole<-map_data %>% 
+  filter(species == "Lodge_Pole")
+#Plot
+ggplot() +
+  geom_sf(data = oregon_sf, fill = "gray95", color = "black") +
+  geom_sf(data = lodge_pole,
+          aes(color = factor(year), shape = top_predictor),
+          size = 2, alpha = 0.8) +
+  scale_color_viridis_d(option = "C") +
+  labs(title = "Lodge Pole Pine Recruitment Plots in Oregon",
+       color = "Year",
+       shape = "Top Predictor") +
+  theme_minimal(base_size = 12)
+```
 
