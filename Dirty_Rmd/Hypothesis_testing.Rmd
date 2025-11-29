@@ -1,0 +1,212 @@
+---
+title: "Stats"
+author: "Bryce DiNardo"
+date: "2025-11-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Hypothesis testing
+
+H1: Tmean and Pr will be the most important climatice drivers of seedling desnity
+
+```{r cars}
+varimp_long_sum <- models_summary %>%
+  unnest(varimp) %>%
+  group_by(species, year, predictor) %>%
+  summarise(importance = mean(importance), .groups = "drop")
+
+```
+How often tmean and pr are top two predictors
+
+```{r pressure, echo=FALSE}
+rank_summary <- varimp_long_sum %>%
+  group_by(species, year) %>%
+  arrange(desc(importance)) %>%
+  mutate(rank = row_number())
+
+# Frequency table
+rank_summary %>%
+  filter(species == "Douglas_Fir") %>% 
+  group_by(predictor, species) %>%
+  summarise(top2_freq = sum(rank <= 2),
+            total_years = n(),
+            proportion = top2_freq / total_years) %>% 
+  arrange(desc(top2_freq))
+
+```
+Something I dont understand yet
+```{r}
+install.packages("boot")
+library(boot)
+
+# Function for bootstrapping mean importance
+boot_mean <- function(x, i) {
+  mean(x[i])
+}
+
+
+ci_summary <- varimp_long_sum %>%
+  group_by(predictor) %>%
+  summarise(
+    mean_imp = mean(importance),
+    ci_low = boot::boot.ci(boot(data = importance, statistic = boot_mean, R = 1000),
+                           type = "perc")$percent[4],
+    ci_high = boot::boot.ci(boot(data = importance, statistic = boot_mean, R = 1000),
+                            type = "perc")$percent[5]
+  )
+
+```
+Freidman test
+```{r}
+library(rstatix)
+
+df_imp_long <- varimp_long_sum %>%
+  filter(species == "Lodge_Pole") %>%
+  select(year, predictor, importance) %>%
+  mutate(id = year)   # use year as the blocking factor
+friedman_test(df_imp_long, importance ~ predictor | id)
+pairwise_wilcox_test(df_imp_long, importance ~ predictor, paired = TRUE, p.adjust.method = "BH")
+
+
+```
+### Addressing H2
+Importance of climate varibles are greatest in years with climate anmoarlies
+
+Step 1: Use my gridmet data so determine if there are climate abnormoaloes
+using tmean and pr
+```{r}
+#load in saved gridmet data 
+get_tmean<-function(year){
+  #make the file path that can be used in interations
+tmean_year<-paste0("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Processed Climate Tiffs/tmean/tmean_", year, ".tif")
+
+#read in the corresponding rasters 
+rast(tmean_year)
+}
+
+
+get_pr<-function(year){
+  #make the file path that can be used in interations
+
+pr_year<-paste0("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Processed Climate Tiffs/Pr/pr_", year, ".tif")
+
+#read in the corresponding rasters 
+rast(pr_year)
+}
+```
+get for 2014
+```{r}
+tmean_2014<-get_tmean(2014)
+pr_2014<-get_pr(2014)
+
+```
+Extract means for the whole raster
+```{r}
+pr_mean_2014 <- global(pr_2014, "mean", na.rm = TRUE)
+tmean_mean_2014 <- global(tmean_2014, "mean", na.rm = TRUE)
+
+```
+See if I can build a climate summarize table with years and values in rows and tmean and pr as col
+```{r}
+years <- 2014:2022
+
+# Initialize an empty list to collect rows
+rows <- list()
+
+for (y in years) {
+  pr_rast <- get_pr(y)
+  tmean_rast <- get_tmean(y)
+  
+  # Extract statewide mean values as numerics
+  pr_mean <- global(pr_rast, "mean", na.rm = TRUE)[1]
+  tmean_mean <- global(tmean_rast, "mean", na.rm = TRUE)[1]
+  
+  # Store as a list row
+  rows[[as.character(y)]] <- data.frame(
+    year = y,
+    pr = pr_mean,
+    tmean = tmean_mean
+  )
+}
+
+# Bind all rows together
+climate_summary <- do.call(rbind, rows)
+years <- 2014:2022
+
+# Initialize an empty list to collect rows
+rows <- list()
+
+for (y in years) {
+  pr_rast <- get_pr(y)
+  tmean_rast <- get_tmean(y)
+  
+  # Extract statewide mean values as numerics
+  pr_mean <- global(pr_rast, "mean", na.rm = TRUE)[1]
+  tmean_mean <- global(tmean_rast, "mean", na.rm = TRUE)[1]
+  
+  # Store as a list row
+  rows[[as.character(y)]] <- data.frame(
+    year = y,
+    pr = pr_mean,
+    tmean = tmean_mean
+  )
+}
+
+# Bind all rows together
+climate_summary <- do.call(rbind, rows)
+rownames(climate_summary) <- NULL
+names(climate_summary)[2:3] <- c("pr", "tmean")
+names(climate_summary)[2:3] <- c("pr", "tmean")
+climate_summary
+
+
+```
+Calcute how geeat  each years given pr and tmean is from the standard devioiation is from the overall mean, is it is greater than 1 in either direction it is considered an extereme climate year 
+```{r}
+threshold <- 1  
+
+climate_summary<-climate_summary %>%
+    mutate(
+      pr_z = (pr - mean(pr, na.rm = TRUE)) / sd(pr, na.rm = TRUE),
+      tmean_z = (tmean - mean(tmean, na.rm = TRUE)) / sd(tmean, na.rm = TRUE),
+      category = case_when(
+        abs(pr_z) > threshold | abs(tmean_z) > threshold ~ "Extreme",
+        TRUE ~ "Average"))
+climate_summary
+```
+Now each year is in a caregory of either an extrerem or average climate year, so I can join it with my permutaion imporantace table I made from all my random forests
+```{r}
+varimp_with_climate <- varimp_long %>%
+  left_join(climate_summary %>% select(year, category), by = "year")
+
+```
+other stuff
+```{r}
+names(varimp_with_climate)
+
+climate_importance <- varimp_with_climate %>%
+  filter(species == "Douglas_Fir", predictor %in% c("pr", "tmean", "tmmn", "tmmx")) %>%
+  group_by(year, category) %>%
+  summarise(total_importance = sum(importance), .groups = "drop")
+
+```
+
+stat
+```{r}
+wilcox.test(total_importance ~ category, data = climate_importance)
+
+```
+vis
+```{r}
+ggplot(climate_importance, aes(x = category, y = total_importance, fill = category)) +
+  geom_boxplot() +
+  labs(title = "Climate predictor importance in Extreme vs. Average years",
+       y = "Total climate importance", x = "Year category")
+`
+```
+
+

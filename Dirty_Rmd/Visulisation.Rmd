@@ -106,6 +106,48 @@ ggplot(varimp_long %>% filter(species == "Douglas_Fir", year == 2014),
   theme_minimal()
 
 ```
+Facet the one above by year
+```{r}
+ggplot(varimp_long %>% filter(species == "Douglas_Fir", year >= 2014, year <= 2022),
+       aes(x = importance, y = reorder(predictor, importance), fill = predictor)) +
+  geom_col() +
+  facet_wrap(~ year, ncol = 3) +
+  labs(title = "Douglas-Fir Variable Importance (2014–2022)",
+       x = "Permutation importance",
+       y = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "none")
+
+```
+For hemlock
+```{r}
+ggplot(varimp_long %>% filter(species == "Western_Hemlock", year >= 2014, year <= 2022),
+       aes(x = importance, y = reorder(predictor, importance), fill = predictor)) +
+  geom_col() +
+  facet_wrap(~ year, ncol = 3) +
+  labs(title = "Western Hemlock Variable Importance (2014–2022)",
+       x = "Permutation importance",
+       y = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "none")
+
+```
+Lodge-Pole pine
+```{r}
+ggplot(varimp_long %>% filter(species == "Lodge_Pole", year >= 2014, year <= 2022),
+       aes(x = importance, y = reorder(predictor, importance), fill = predictor)) +
+  geom_col() +
+  facet_wrap(~ year, ncol = 3) +
+  labs(title = "Lodge Pole Pine Variable Importance (2014–2022)",
+       x = "Permutation importance",
+       y = NULL) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "none")
+
+```
+
+
+
 This one is good too, based on species, including all years, which predictors are consistinly imporantant year to year
 ```{r}
 ggplot(varimp_long %>% filter(species == "Douglas_Fir"),
@@ -252,7 +294,7 @@ ggplot(varimp_pct,
   labs(title = "Relative Predictor Importance Across Species")
 
 ```
-I'm going to make a table that shows max min mean r2 for each species, and then mean rmse, but back transformed to have it in terms of actual TPA
+I'm going to make a table that shows max min mean r2 for each species, and then mean rmse, but back transformed to have it in terms of a factor multiler of TPA
 ```{r}
 models_summary
 #First get min max mean r2
@@ -267,6 +309,7 @@ mean_rmse<-models_summary %>%
 
 #Join them
 summarized_model_preformance<- r2_summarised %>% left_join(mean_rmse, by = "species")
+summarized_model_preformance
 ```
 Map maps maps!
 map with symbols for species and color for top driver

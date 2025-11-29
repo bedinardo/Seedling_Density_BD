@@ -21,7 +21,9 @@ library(ggplot2)
 ```{r}
 or_fia <- readFIA("C:/Users/Bryce/OneDrive - University Of Oregon/FIA", nCores = 4)
 or_fia_clip <- clipFIA(or_fia, mostRecent = TRUE)
-rm(or_fia)
+#rm(or_fia)
+min(or_fia_clip$COND$INVYR)
+min(or_fia$COND$INVYR)
 ```
 ### Function to get seedling data from your specific invenotry year
 Inputs: year of intrest and the speceis code for speceis of intrest found on FIA appendix F

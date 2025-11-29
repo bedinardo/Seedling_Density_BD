@@ -58,10 +58,11 @@ st_write(all_sf,
          "C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Geom_point_w_sp_yr/all_species_years.gpkg",
          delete_dsn = TRUE)
 
-crs(all_sf)
+
 ```
 Join my two big tables together by species and year
 ```{r}
+all_sf<-read_sf("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/data/Geom_point_w_sp_yr/all_species_years.gpkg")
 map_data <- all_sf %>%
   left_join(models_summary, by = c("species", "year"))
 ```
