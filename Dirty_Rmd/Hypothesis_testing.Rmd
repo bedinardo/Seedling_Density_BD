@@ -195,11 +195,7 @@ climate_importance <- varimp_with_climate %>%
 
 ```
 
-stat
-```{r}
-wilcox.test(total_importance ~ category, data = climate_importance)
 
-```
 vis
 ```{r}
 ggplot(climate_importance, aes(x = category, y = total_importance, fill = category)) +
@@ -208,5 +204,31 @@ ggplot(climate_importance, aes(x = category, y = total_importance, fill = catego
        y = "Total climate importance", x = "Year category")
 `
 ```
+stat:Permutation test: what is the probability that the given distubation is explained by random change
+```{r}
+set.seed(123)  # for reproducibility
 
+# Observed difference in mean importance
+obs_diff <- with(climate_importance,
+                 mean(total_importance[category == "Extreme"]) -
+                 mean(total_importance[category == "Average"]))
+
+# Permutation test
+n_perm <- 10000
+perm_diffs <- numeric(n_perm)
+
+for (i in 1:n_perm) {
+  shuffled <- sample(climate_importance$category)  # shuffle labels
+  perm_diffs[i] <- with(climate_importance,
+                        mean(total_importance[shuffled == "Extreme"]) -
+                        mean(total_importance[shuffled == "Average"]))
+}
+
+# p-value: proportion of permuted diffs >= observed
+p_value <- mean(perm_diffs >= obs_diff)
+
+obs_diff
+p_value
+
+```
 
