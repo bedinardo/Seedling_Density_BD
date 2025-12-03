@@ -108,18 +108,69 @@ ggplot(varimp_long %>% filter(species == "Douglas_Fir", year == 2014),
 ```
 Facet the one above by year
 ```{r}
-ggplot(varimp_long %>% filter(species == "Douglas_Fir", year >= 2014, year <= 2022),
-       aes(x = importance, y = reorder(predictor, importance), fill = predictor)) +
-  geom_col() +
+predictor_order <- c("OWNGRPCD", "OWNCD", "ELEV", "pr", "tmmn", "tmmx", "tmean")
+ggplot(varimp_long %>%
+         filter(species == "Douglas_Fir", year >= 2014, year <= 2022) %>%
+         mutate(predictor = factor(predictor, levels = predictor_order)),
+       aes(x = importance,
+           y = predictor,
+           fill = predictor)) +
+  geom_col(show.legend = FALSE, width = 0.7) +
   facet_wrap(~ year, ncol = 3) +
   labs(title = "Douglas-Fir Variable Importance (2014–2022)",
-       x = "Permutation importance",
+       x = "Mean decrease in seedling model accuracy",
        y = NULL) +
-  theme_minimal(base_size = 12) +
-  theme(legend.position = "none")
+  theme_minimal(base_size = 14) +
+  theme(
+    strip.text = element_text(face = "bold", size = 12),
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    axis.text.y = element_text(size = 9),
+    axis.text.x = element_text(size = 10),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+
+
 
 ```
+export
+```{r}
+ggsave("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/Figures/DouglasFir_VarImp.png", width = 10, height = 7, dpi = 300)
+
+```
+
+A scatter plot with mean and sd of permutation imporantace
+```{r}
+imporant_mean<-varimp_long %>% 
+  filter(species == "Douglas_Fir") %>% 
+  group_by(predictor) %>% 
+  summarise(mean_importance = mean(importance), sd = sd(importance)) %>% 
+  dplyr::mutate(predictor = factor(predictor, levels = predictor_order))
+
+ggplot(imporant_mean, aes(x = predictor, y = mean_importance)) +
+  geom_point(size = 4, color = "steelblue") +
+  geom_errorbar(aes(ymin = mean_importance - sd,
+                    ymax = mean_importance + sd),
+                width = 0.2, color = "gray40") +
+  labs(title = "Mean Permutation Importance by Predictor (2014–2022)",
+       x = "Predictor",
+       y = "Mean permutation importance") +
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+    axis.text.x = element_text(angle = 30, hjust = 1, size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14, face = "bold")
+  )
+
+
+
+```
+
+
+
 For hemlock
+
 ```{r}
 ggplot(varimp_long %>% filter(species == "Western_Hemlock", year >= 2014, year <= 2022),
        aes(x = importance, y = reorder(predictor, importance), fill = predictor)) +
@@ -158,7 +209,38 @@ ggplot(varimp_long %>% filter(species == "Douglas_Fir"),
   theme_minimal()
 
 ```
+Poster
+```{r}
+ggplot(varimp_long %>%
+         filter(species == "Douglas_Fir") %>%
+         mutate(predictor = factor(predictor,
+                                   levels = predictor_order,
+                                   labels = pretty_names[predictor_order])),
+       aes(x = year, y = importance, color = predictor)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(
+    title = "Douglas-Fir — Importance Over Time",
+    y = "Mean decrease in seedling model accuracy",
+    x = "Year",
+    color = "Predictor"
+  ) +
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.title = element_text(size = 14, face = "bold"),
+    legend.text = element_text(size = 12),
+    panel.grid.minor = element_blank()
+  )
+
+```
+
+
+
 Looks how vairale imporantace changes year to year
+
 ```{r}
 ggplot(varimp_long %>% filter(species == "Douglas_Fir"),
        aes(x = year, y = importance, color = predictor)) +
@@ -167,6 +249,8 @@ ggplot(varimp_long %>% filter(species == "Douglas_Fir"),
   labs(title = "Douglas Fir — Importance over time",
        y = "Permutation importance") +
   theme_minimal()
+
+
 #hemlock
 ggplot(varimp_long %>% filter(species == "Western_Hemlock"),
        aes(x = year, y = importance, color = predictor)) +
@@ -299,6 +383,7 @@ I'm going to make a table that shows max min mean r2 for each species, and then 
 models_summary
 #First get min max mean r2
 r2_summarised<-models_summary %>% 
+  filter(species == "Douglas_Fir") %>% 
   group_by(species) %>% 
   summarise(min_r2 = min(r2), max_r2 = max(r2), mean_r2 = mean(r2))
   
@@ -311,6 +396,143 @@ mean_rmse<-models_summary %>%
 summarized_model_preformance<- r2_summarised %>% left_join(mean_rmse, by = "species")
 summarized_model_preformance
 ```
+Poster Graphs
+Prilimary settings so everything can match 
+```{r}
+predictor_order <- c("OWNGRPCD", "OWNCD", "ELEV", "pr", "tmmn", "tmmx", "tmean")
+predictor_colors <- c(
+  "OWNGRPCD" = "#E69F00",  # orange
+  "OWNCD"    = "#56B4E9",  # sky blue
+  "ELEV"     = "#009E73",  # green
+  "pr"       = "#0072B2",  # yellow
+  "tmmn"     = "#F0E442",  # blue
+  "tmmx"     = "#D55E00",  # reddish orange
+  "tmean"    = "#CC79A7"   # purple/pink
+)
+
+
+
+```
+
+line
+```{r}
+predictor_order_revers <- c("tmean", "tmmx", "tmmn", "pr", "ELEV", "OWNCD", "OWNGRPCD")
+ggplot(varimp_long %>%
+         filter(species == "Douglas_Fir") %>%
+         mutate(predictor = factor(predictor, levels = predictor_order_revers)),
+       aes(x = year, y = importance, color = predictor)) +
+  geom_line(size = 1) +
+  geom_point(size = 1.2) +
+  scale_color_manual(values = predictor_colors) +
+  labs(title = "Douglas-Fir — Importance Over Time",
+       y = "Mean Decrease in Seedling Model Accuracy",
+       x = "Year",
+       color = "Predictor") +
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.title   = element_text(face = "bold", size = 18, hjust = 0.5),
+    axis.text    = element_text(size = 12),
+    axis.title.x = element_text(size = 14, margin = margin(t = 15)),  # move x-axis title down
+    axis.title.y = element_text(size = 14, margin = margin(r = 12)),  # move y-axis title left
+    legend.title = element_text(size = 14, face = "bold"),
+    legend.text  = element_text(size = 12),
+    panel.grid.minor = element_blank()
+  )
+
+
+
+```
+Faceted bar
+```{r}
+ggplot(varimp_long %>%
+         filter(species == "Douglas_Fir", year >= 2014, year <= 2022) %>%
+         mutate(predictor = factor(predictor, levels = predictor_order)),
+       aes(x = importance, y = predictor, fill = predictor)) +
+  geom_col(width = 0.7) +
+  scale_fill_manual(values = predictor_colors) +
+  facet_wrap(~ year, ncol = 3) +
+  labs(title = "Douglas-Fir Variable Importance (2014–2022)",
+       x = "Mean Decrease in Seedling Model Accuracy",
+       y = NULL) +
+  theme_minimal(base_size = 14) +
+  theme(
+    strip.text = element_text(face = "bold", size = 12),
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    axis.text.y = element_text(size = 9),
+    axis.text.x = element_text(size = 10),
+    axis.title.x = element_text(size = 12, margin = margin(t = 15)),  # move x-axis label down
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank(),
+    legend.position = "none"
+  )
+
+```
+Save them
+```{r}
+ggsave("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/Figures/DouglasFir_box.png", width = 10, height = 7, dpi = 300)
+```
+
+scatterplot
+```{r}
+imporant_mean<-varimp_long %>% 
+  filter(species == "Douglas_Fir") %>% 
+  group_by(predictor) %>% 
+  summarise(mean_importance = mean(importance), sd = sd(importance)) %>% 
+  dplyr::mutate(predictor = factor(predictor, levels = predictor_order_revers))
+
+ggplot(imporant_mean, aes(x = predictor, y = mean_importance, color = predictor)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = mean_importance - sd,
+                    ymax = mean_importance + sd),
+                width = 0.1, color = "gray40") +
+  scale_color_manual(values = predictor_colors) +
+  labs(title = "Mean Permutation Importance by Predictor (2014–2022)",
+       x = "Predictor",
+       y = "Mean Permutation Importance") +
+  theme_minimal(base_size = 16) +
+  theme(
+  plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+  axis.text.x = element_text(angle = 30, hjust = 1, size = 12),
+  axis.text.y = element_text(size = 12),
+  axis.title = element_text(size = 14),
+  legend.position = "none",
+  plot.margin = margin(t = 10, r = 10, b = 10, l = 10)  # tighter margins
+)
+
+
+```
+
+```{r}
+ggplot(imporant_mean %>%
+         mutate(predictor = factor(predictor, levels = predictor_order)),
+       aes(x = predictor, y = mean_importance, color = predictor)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = mean_importance - sd,
+                    ymax = mean_importance + sd),
+                width = 0.1, color = "gray40") +
+  scale_color_manual(values = predictor_colors) +
+  coord_flip() +
+  labs(title = "Mean Permutation Importance by Predictor (2014–2022)",
+       x = NULL,
+       y = "Mean Permutation Importance") +
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.title   = element_text(face = "bold", size = 18, hjust = 0.5),
+    axis.text.y  = element_text(size = 12),
+    axis.text.x  = element_text(size = 12),
+    axis.title.y = element_text(size = 14, margin = margin(r = 10)),   # move y-axis title
+    axis.title.x = element_text(size = 14, margin = margin(t = 15)),   # move x-axis title down
+    legend.position = "none"
+  )
+
+```
+
+
+
+```{r}
+ggsave("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/Figures/DouglasFir_scatter.png", width = 10, height = 7, dpi = 300)
+```
+
 Map maps maps!
 map with symbols for species and color for top driver
 I need a oregon shape file ( crs wgs 84)

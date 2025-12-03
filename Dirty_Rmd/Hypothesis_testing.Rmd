@@ -16,7 +16,8 @@ H1: Tmean and Pr will be the most important climatice drivers of seedling desnit
 ```{r cars}
 varimp_long_sum <- models_summary %>%
   unnest(varimp) %>%
-  group_by(species, year, predictor) %>%
+  filter(species == "Douglas_Fir") %>% 
+  group_by(year, predictor) %>%
   summarise(importance = mean(importance), .groups = "drop")
 
 ```
@@ -38,7 +39,7 @@ rank_summary %>%
   arrange(desc(top2_freq))
 
 ```
-Something I dont understand yet
+Something I dont understand yet, not using
 ```{r}
 install.packages("boot")
 library(boot)
@@ -167,7 +168,7 @@ climate_summary
 ```
 Calcute how geeat  each years given pr and tmean is from the standard devioiation is from the overall mean, is it is greater than 1 in either direction it is considered an extereme climate year 
 ```{r}
-threshold <- 1  
+threshold <- 2  
 
 climate_summary<-climate_summary %>%
     mutate(
@@ -230,5 +231,41 @@ p_value <- mean(perm_diffs >= obs_diff)
 obs_diff
 p_value
 
+```
+vis 2
+```{r}
+ggplot(climate_importance, aes(x = category, y = total_importance, fill = category)) +
+  geom_boxplot(alpha = 0.6) +
+  labs(title = "Climate predictor importance in Extreme vs. Average years",
+       y = "Total climate importance", x = "Year category") +
+  annotate("text", x = 1.5, y = max(climate_importance$total_importance),
+           label = "p = 0.2068 (ns)", size = 5)
+
+```
+Poster
+```{r}
+ggplot(climate_importance,
+       aes(x = category, y = total_importance, fill = category)) +
+  geom_boxplot(alpha = 0.7, width = 0.6, outlier.shape = 21, outlier.alpha = 0.5) +
+  labs(
+    title = "Climate Predictor Importance in Extreme vs. Average Years",
+    y = "Total Climate Importance",
+    x = "Year Category"
+  ) +
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_text(size = 14),
+    axis.text.x  = element_text(size = 12),
+    axis.text.y  = element_text(size = 12),
+    legend.position = "none",              # no redundant legend
+    panel.grid.minor = element_blank()
+  ) +
+  scale_fill_manual(values = c("Extreme" = "#E69F00", "Average" = "#56B4E9"))
+```
+save
+```{r}
+ggsave("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/Figures/DouglasFir_climimport.png", width = 10, height = 7, dpi = 300)
 ```
 

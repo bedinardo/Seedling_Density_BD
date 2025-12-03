@@ -86,4 +86,30 @@ for(i in year){
 }
 ```
 
+```{r}
+doug_fir_2014<-get_training_data(2014, "Douglas_Fir")
+```
+
+```{r}
+test1<-ranger(
+    formula =(TPA) ~ ELEV + OWNCD + OWNGRPCD + tmmn + tmmx + tmean + pr,
+    data = doug_fir_2014,
+    num.trees = 1000,
+    mtry = 3,
+    importance = "permutation",
+    seed = 123
+  )
+test1
+```
+```{r}
+test2<-ranger(
+    formula = log10(TPA) ~ ELEV + OWNCD + OWNGRPCD + tmmn + tmmx + tmean + pr,
+    data = doug_fir_2014,
+    num.trees = 1000,
+    mtry = 3,
+    importance = "permutation",
+    seed = 123
+  )
+test2
+```
 

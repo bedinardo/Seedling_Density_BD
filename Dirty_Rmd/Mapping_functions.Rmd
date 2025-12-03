@@ -107,7 +107,7 @@ ggplot() +
           aes(color = factor(year), shape = top_predictor),
           size = 2, alpha = 0.8) +
   scale_color_viridis_d(option = "C") +
-  labs(title = "Douglas-Fir Recruitment Plots in Oregon",
+  labs(title = "FIA Plot Locations and Top Predictors",
        color = "Year",
        shape = "Top Predictor") +
   theme_minimal(base_size = 12)
@@ -144,5 +144,48 @@ ggplot() +
        color = "Year",
        shape = "Top Predictor") +
   theme_minimal(base_size = 12)
+```
+Poster read
+```{r}
+ggplot() +
+  # Base map of Oregon
+  geom_sf(data = oregon_sf, fill = "gray95", color = "black", size = 0.3) +
+  
+  # Plot locations with predictor shapes and year colors
+  geom_sf(data = Doug_fir,
+          aes(color = factor(year), shape = top_predictor),
+          size = 2.5, alpha = 0.9) +
+  
+  # Color scale for years
+  scale_color_viridis_d(option = "C", end = 0.9) +
+  
+  # Shape scale for predictors
+  scale_shape_manual(values = c(16, 17, 15, 18, 8, 3, 4)) +
+  
+  # Labels
+  labs(
+    title = "FIA Plot Locations and Top Predictors",
+    color = "Year",
+    shape = "Top Predictor",
+    x = "Longitude",
+    y = "Latitude"
+  ) +
+  
+  # Poster-ready theme
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.title   = element_text(face = "bold", size = 18, hjust = 0.5),
+    legend.title = element_text(size = 14, face = "bold"),
+    legend.text  = element_text(size = 12),
+    axis.text    = element_text(size = 12),
+    axis.title   = element_text(size = 14),
+    panel.grid.major = element_line(color = "gray80", size = 0.3),  # keep lat/long lines
+    panel.grid.minor = element_blank()
+  )
+```
+save
+```{r}
+ggsave("C:/Users/Bryce/OneDrive - University Of Oregon/Data_Sci/Seedling_Density_BD/Figures/Oregon_DouglasFir_Map.png", width = 10, height = 8, dpi = 300)
+
 ```
 

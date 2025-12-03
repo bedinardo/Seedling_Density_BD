@@ -21,9 +21,9 @@ library(ggplot2)
 ```{r}
 or_fia <- readFIA("C:/Users/Bryce/OneDrive - University Of Oregon/FIA", nCores = 4)
 or_fia_clip <- clipFIA(or_fia, mostRecent = TRUE)
-#rm(or_fia)
-min(or_fia_clip$COND$INVYR)
-min(or_fia$COND$INVYR)
+rm(or_fia)
+#min(or_fia_clip$COND$INVYR)
+#min(or_fia$COND$INVYR)
 ```
 ### Function to get seedling data from your specific invenotry year
 Inputs: year of intrest and the speceis code for speceis of intrest found on FIA appendix F
@@ -123,8 +123,77 @@ process_seedlings <- function(year, spcd, save_path = NULL) {
 ```
 Test Function works, it goes
 ```{r}
-process_seedlings(2022, 202)
+seelding_2022<-process_seedlings(2022, 202)
+seelding_2021<-process_seedlings(2021, 202)
+seelding_2020<-process_seedlings(2020, 202)
+seelding_2019<-process_seedlings(2019, 202)
+seelding_2018<-process_seedlings(2018, 202)
+seelding_2017<-process_seedlings(2017, 202)
+seelding_2016<-process_seedlings(2016, 202)
+seelding_2015<-process_seedlings(2015, 202)
+seelding_2014<-process_seedlings(2014, 202)
 ```
+bind them all
+```{r}
+# Add year column to each dataset
+seelding_2014 <- seelding_2014 %>% mutate(year = 2014)
+seelding_2015 <- seelding_2015 %>% mutate(year = 2015)
+seelding_2016 <- seelding_2016 %>% mutate(year = 2016)
+seelding_2017 <- seelding_2017 %>% mutate(year = 2017)
+seelding_2018 <- seelding_2018 %>% mutate(year = 2018)
+seelding_2019 <- seelding_2019 %>% mutate(year = 2019)
+seelding_2020 <- seelding_2020 %>% mutate(year = 2020)
+seelding_2021 <- seelding_2021 %>% mutate(year = 2021)
+seelding_2022 <- seelding_2022 %>% mutate(year = 2022)
+
+# Bind them all together
+seedlings_all <- bind_rows(
+  seelding_2014, seelding_2015, seelding_2016, seelding_2017,
+  seelding_2018, seelding_2019, seelding_2020, seelding_2021, seelding_2022
+)
+
+```
+all binded, now graphing
+```{r}
+ggplot(seedlings_all, aes(x = factor(year), y = log10(TPA))) +
+  geom_boxplot(fill = "forestgreen", alpha = 0.6, outlier.color = "gray40") +
+  labs(
+    title = "Annual Seedling Density",
+    x = "Year",
+    y = "Log10 Trees per Acre (TPA)"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+```
+
+hist
+```{r}
+#plot(seelding_2022["TPA"], main = "Douglas-fir Seedling Density by Plot")
+#Histogram of data
+ggplot(seelding_2022, aes(x = TPA)) +
+  geom_histogram(binwidth = 100, fill = "forestgreen", color = "white") +
+  labs(
+    title = "Histogram of Douglas-fir Seedling Density (TPA)",
+    x = "Trees per Acre (TPA)",
+    y = "Number of Plots"
+  ) +
+  theme_minimal()
+```
+```{r}
+ggplot(seelding_2022, aes(x = log10(TPA))) +
+  geom_histogram(binwidth = 0.1, fill = "forestgreen", color = "white") +
+  labs(
+    title = "Histogram of Douglas-fir Seedling Density (log10 TPA)",
+    x = "log10(Trees per Acre)",
+    y = "Number of Plots"
+  ) +
+  theme_minimal(base_size = 14)
+```
+
 Lets use a loop to run through all years 2014-2022 for douglas-fir (202)
 ```{r}
 years<-2014:2022
